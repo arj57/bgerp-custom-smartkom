@@ -1,7 +1,7 @@
 package org.bgerp.plugin.custom.demo.action.report;
 
 import org.apache.struts.action.ActionForward;
-import org.bgerp.l10n.Localization;
+import org.bgerp.app.l10n.Localization;
 import org.bgerp.plugin.custom.demo.Plugin;
 import org.bgerp.plugin.report.action.ReportActionBase;
 import org.bgerp.plugin.report.model.Column;
@@ -14,7 +14,6 @@ import ru.bgcrm.util.sql.ConnectionSet;
 
 @Action(path = "/user/plugin/custom.demo/report/demo")
 public class DemoReport extends ReportActionBase {
-
     /**
      * This overwritten method is required because of action specification.
      */
@@ -26,7 +25,7 @@ public class DemoReport extends ReportActionBase {
     @Override
     public String getTitle() {
         // the title is localized in the plugin's l10n.xml
-        return Localization.getLocalizer(Localization.getSysLang(), Plugin.ID).l("Демо отчёт");
+        return "Demo Report";
     }
 
     @Override
