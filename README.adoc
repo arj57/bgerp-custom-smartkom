@@ -1,4 +1,4 @@
 = BGERP CUSTOM DEMO
 
 This is the demo repo, fork it to your own:
-https://bgerp.org/doc/3.0/manual/kernel/extension.html#custom
+https://bgerp.org/version/3.0/doc/kernel/extension.html#custom
