@@ -1,0 +1,5 @@
+<item title="Plugin CustomSmartkom">
+	<item title="Report Action">
+		<item action="org.bgerp.plugin.custom.smartkom.report.action.MagistralReportAction" title="Smartkom"/>
+	</item>
+</item>
