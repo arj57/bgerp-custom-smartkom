@@ -70,7 +70,7 @@ import org.w3c.dom.*;
  * 
  * @author alex 2019-08-26
  */
-public class ContragentsImport implements Runnable {
+public class ContragentsImport implements org.bgerp.app.exec.Runnable {
 
     private static final Log logger = Log.getLog();
     private static final java.util.regex.Pattern CONTRACT_TITLE_PATTERN = java.util.regex.Pattern
