@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <data>
 	<p><ru>Отчет Абонгруппы</ru><en>Report for Abon Group</en></p>
-	<p><ru></ru><en></en></p>
-	<p><ru></ru><en></en></p>
-	<p><ru></ru><en></en></p>
-	<p><ru></ru><en></en></p>
-	<p><ru></ru><en></en></p>
+	<p><ru>Отчет</ru><en>Report</en></p>
+	<p><ru>Начало периода</ru><en>From</en></p>
+	<p><ru>Окончание периода</ru><en>To</en></p>
+	<p><ru>Создано заявок "Изменения в услуге"</ru><en>Created "Service to change"</en></p>
+	<p><ru>Закрыто заявок "Изменения в услуге" 2-ой линией</ru><en>Created "Service to change" by 2L</en></p>
+	<p><ru>Отключения</ru><en></en>Disconnections</p>
+	<p><ru>Отключения 2-ой линией</ru><en>Disconnections by 2L</en></p>
+<!-- 	<p><ru></ru><en></en></p> -->
 </data>

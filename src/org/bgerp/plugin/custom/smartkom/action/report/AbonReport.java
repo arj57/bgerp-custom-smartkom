@@ -34,7 +34,7 @@ public class AbonReport extends ReportActionBase {
 
     @Override
     public String getTitle() {
-        return "Отчет Абонгруппы";
+        return Plugin.INSTANCE.getLocalizer().l("Отчет Абонгруппы");
     }
 
     @Override
