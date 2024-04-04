@@ -16,8 +16,8 @@
 	<%--
     Переменная form - объект класса ru.bgcrm.struts.form.DynActionForm, содержащий параметры запроса.
     --%>
-    <c:set var="fromdate" value="${u:parseDate( form.param.fromdate, 'ymd' ) }"/>
-    <c:set var="todate" value="${u:parseDate( form.param.todate, 'ymd' ) }"/>
+    <c:set var="fromdate" value="${tu.parse( form.param.fromdate, 'ymd' ) }"/>
+    <c:set var="todate" value="${tu.parse( form.param.todate, 'ymd' ) }"/>
 <%-- 	<c:set var="listParamIds" value="${form.getSelectedValues('listParam')}"/>
 	<c:set var="status" value="${form.getSelectedValues( 'status' )}"/> --%>
 	<html:form action="/user/empty">
@@ -33,7 +33,7 @@
 		<br/>
 		<br/>
 		<br/>
-		<button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button>
+		<button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this, $(this.form).parent())">Сформировать</button>
 	</html:form>
 	
 	<c:if test="${not empty fromdate}">
@@ -128,7 +128,7 @@
 	</tr>
 		<c:forEach var="row" items="${result.rowsByIndex}">
 			<tr>
-				<td><a href="UNDEF" onclick="openProcess( ${row[0]} ); return false;">${row[0]}</a></td>
+				<td><a href="UNDEF" onclick="$$.process.open( ${row[0]} ); return false;">${row[0]}</a></td>
 				<td>${row[1]}</td>
 				<td>${row[2]}</td>
 				<td>${row[3]}</td>

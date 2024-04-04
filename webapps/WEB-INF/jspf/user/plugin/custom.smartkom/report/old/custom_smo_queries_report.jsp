@@ -13,7 +13,7 @@
 		
 		Отчет формируется за вчерашний день (процесс был закрыт вчера)
 		<br/>
-		<%--<button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button> --%>
+		<%--<button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this, $(this.form).parent())">Сформировать</button> --%>
 	</html:form>
 		<%-- в случае, если Slave база не настроена - будет использована обычная --%> 
 		<sql:query var="result" dataSource="${ctxSlaveDataSource}">

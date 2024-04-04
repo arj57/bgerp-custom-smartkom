@@ -7,7 +7,7 @@
 	<%--
     Переменная form - объект класса ru.bgcrm.struts.form.DynActionForm, содержащий параметры запроса.
     --%>
-    <c:set var="date" value="${tu:parse( form.param.date, 'ymd' ) }"/>
+    <c:set var="date" value="${tu.parse( form.param.date, 'ymd' ) }"/>
     <c:set var="groups" value="${form.getSelectedValues( 'group' )}"/>
 	<c:set var="executors" value="${form.getSelectedValues( 'executor' )}"/>
 	<c:set var="processTypeIds" value="${form.getSelectedValues('type')}" scope="request"/>
@@ -63,7 +63,7 @@
 			} );															
 		</script>
 		
-		<button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button>
+		<button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this, $(this.form).parent())">Сформировать</button>
 	</html:form>
 	
 	<%--
@@ -132,7 +132,7 @@
 				<c:set var="closeTime" value="${row[4]}"/>
 		
 				<tr>
-					<td><a href="UNDEF" onclick="openProcess( ${id} ); return false;">${id}</a></td>
+					<td><a href="UNDEF" onclick="$$.process.open( ${id} ); return false;">${id}</a></td>
 					<td>${description}</td>
 					<td>${status}</td>
 					<td>${createTime}</td>

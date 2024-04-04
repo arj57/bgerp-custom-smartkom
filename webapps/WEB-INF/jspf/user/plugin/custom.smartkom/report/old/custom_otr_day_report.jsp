@@ -9,8 +9,8 @@
 	<%--
 	    Переменная form - объект класса ru.bgcrm.struts.form.DynActionForm, содержащий параметры запроса.
 	--%>
-	<c:set var="fromdate" value="${u:parseDate( form.param.fromdate, 'ymd' ) }"/>
-	<c:set var="todate" value="${u:parseDate( form.param.todate, 'ymd' ) }"/>
+	<c:set var="fromdate" value="${tu.parse( form.param.fromdate, 'ymd' ) }"/>
+	<c:set var="todate" value="${tu.parse( form.param.todate, 'ymd' ) }"/>
 	                
 	
 	<html:form action="/user/empty">
@@ -39,7 +39,7 @@
 		
 		<br/>
 		
-		<button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button>
+		<button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this, $(this.form).parent())">Сформировать</button>
 	</html:form>
 	<%--
 	Генерация отчёта, если в запросе пришёл параметр date.<>
@@ -159,7 +159,7 @@
 				<c:set var="kurator" value="${row[8]}"/>
 		        <c:set var="time" value="${row[9]}"/>
 				<tr>
-					<td><a href="UNDEF" onclick="openProcess( ${id} ); return false;">${id}</a></td>
+					<td><a href="UNDEF" onclick="$$.process.open( ${id} ); return false;">${id}</a></td>
 					<td>${createTime}</td>
 					<td>${plancomplDate}</td>
 					<td>${complDate}</td>
