@@ -3,8 +3,8 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jspf/taglibs.jsp"%>
 
-<div class="center1020">
-	<h2>СМО - Отчет по выездам с выбором даты</h2>
+<div>
+	<h2>ГЭС - Отчет по выездам с выбором даты</h2>
 	
 	<%--
 	    Переменная form - объект класса ru.bgcrm.struts.form.DynActionForm, содержащий параметры запроса.
@@ -68,8 +68,8 @@
 	LEFT JOIN process_link AS prlink2 ON prlink.process_id = prlink2.process_id AND prlink2.object_type = "customer"
 	LEFT JOIN customer ON prlink2.object_id = customer.id 
 	WHERE (vstart.value BETWEEN ? AND addtime(?, '23:59:59') OR vend.value BETWEEN ? AND addtime(?, '23:59:59'))
-	AND process.type_id IN(30,20)
-	AND process_executor.group_id IN(13,14)
+	AND process.type_id IN(30,20,123)
+<%--	AND process_executor.group_id IN(13,14) --%>
 	
 	GROUP BY process.id
 	

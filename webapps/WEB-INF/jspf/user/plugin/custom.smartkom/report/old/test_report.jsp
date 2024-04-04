@@ -3,11 +3,12 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jspf/taglibs.jsp"%>
 
-<div class="center1020">
-	<h2>"Отдел системного сопровождения"</h2>
+<div>
+	<h2>"Отчет Тест"</h2>
 	<br/>
 	
-	В таблице "Системное сопровождение " Итого считаться не будет, все выводы по клиентам это разные сущности.  
+
+	В указанный период был установлен статус "Принят ОТК".
 	
 	<br/>
 	<br/>
@@ -17,7 +18,8 @@
     --%>
     <c:set var="fromdate" value="${u:parseDate( form.param.fromdate, 'ymd' ) }"/>
     <c:set var="todate" value="${u:parseDate( form.param.todate, 'ymd' ) }"/>
-	
+<%-- 	<c:set var="listParamIds" value="${form.getSelectedValues('listParam')}"/>
+	<c:set var="status" value="${form.getSelectedValues( 'status' )}"/> --%>
 	<html:form action="/user/empty">
 	<%--	<input type="hidden" name="forwardFile" value="/WEB-INF/custom/plugin/report/test_report.jsp"/> --%>
 	<input type="hidden" name="forwardFile" value="/WEB-INF/jspf/user/plugin/custom.smartkom/report/old/test_report.jsp"/>
@@ -27,493 +29,133 @@
 		<ui:date-time paramName="fromdate" value="first"/>
 		
 		Окончание периода:
-		<ui:date-time paramName="todate" value="last"/>
-		
-			
+		<ui:date-time paramName="todate" value="last"/>		
 		<br/>
-		
+		<br/>
+		<br/>
 		<button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button>
 	</html:form>
 	
-	
-	
-	 <c:if test="${not empty fromdate}">
-		<%-- в случае, если Slave база не настроена - будет использована обычная --%>
-		<sql:query var="result" dataSource="${ctxSlaveDataSource}">
-
-
-
-
-	SELECT "Январь 2020 г." AS title,
-	COUNT(tot_cli_created), COUNT(tp1_cli_closed)
-	FROM
-	 (
-	 SELECT DISTINCT
-     CASE
-	 WHEN p.create_dt BETWEEN '2020-01-01' AND '2020-02-01'
-	 AND p.type_id IN(12,2,6,5,3,8,7,4,1,9,19,21,43,44,60,56)
-	 AND pg.role_id = 0
-	 THEN p.id
-	 END AS tot_cli_created,
-	 
-	 CASE
-			
-			 WHEN p.close_dt BETWEEN '2020-01-01' AND '2020-02-01'
-			   AND pg.group_id = 3
-			   AND p.type_id IN(12,2,6,5,3,8,7,4,1,9,19,21,43,44,60,56)
-			   AND pg.role_id = 0
-			  THEN p.id
-			 END AS tp1_cli_closed
-			 
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-	 
-	  WHERE (p.close_dt BETWEEN '2020-01-01' AND '2020-02-01' OR p.create_dt BETWEEN '2020-01-01' AND '2020-02-01')
-			 
-			  
-			 ) AS t1 
-			 	
-    UNION
-    
-	SELECT "Февраль 2020 г." AS title,
-	COUNT(tot_cli_created), COUNT(tp1_cli_closed)
-	FROM
-	 (
-	 SELECT DISTINCT
-     CASE
-	 WHEN p.create_dt BETWEEN '2019-09-01' AND '2019-10-01'
-	 AND p.type_id IN(12,2,6,5,3,8,7,4,1,9,19,21,43,44,60,56)
-	 AND pg.role_id = 0
-	 THEN p.id
-	 END AS tot_cli_created,
-	 
-	 CASE
-			
-			 WHEN p.close_dt  BETWEEN '2019-09-01' AND '2019-10-01'
-			   AND pg.group_id = 3
-			   AND p.type_id IN(12,2,6,5,3,8,7,4,1,9,19,21,43,44,60,56)
-			   AND pg.role_id = 0
-			  THEN p.id
-			 END AS tp1_cli_closed
-			 
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-	 
-	  WHERE (p.close_dt BETWEEN '2019-09-01' AND '2019-10-01' OR p.create_dt BETWEEN '2019-09-01' AND '2019-10-01')
-			 
-			  
-			 ) AS t2 ;	
-			
-		</sql:query>
-
-		
-		<table style="width: 100%;" class="data mt1">
-			
-		
-			<tr>
-				<td bgcolor=#E6E6FA width="300">Дата</td>
-				<td bgcolor=#E6E6FA width="200">Принято клиентских заявок</td>
-				<td bgcolor=#E6E6FA width="200">Выполнено клиентских</td>
-
-				
-			</tr>	
-			
-				<c:forEach var="row" items="${result.rowsByIndex}">
-				<c:set var="sum_pr" value="${row[0]}"/>
-				<c:set var="summa" value="${row[1]}"/>
-				<c:set var="nothing1" value="${row[2]}"/>
-	
-							
-			<tr>
-					<td bgcolor=#F5F5F5>${sum_pr}</td>	
-					<td>${summa}</td>
-					<td>${nothing1}</td>
-			</tr>	
-				
-						
-			</c:forEach>
-		</table>	
-	</c:if>
-
-
-	
-	
-	
 	<c:if test="${not empty fromdate}">
-		<%-- в случае, если Slave база не настроена - будет использована обычная --%>
-		<sql:query var="result" dataSource="${ctxSlaveDataSource}">
+	<sql:query var="result" dataSource="${ctxSlaveDataSource}">
 	
-			SELECT
-			table_user.title AS title,			
-			COUNT(DISTINCT table_process.CompletedProcesses) AS CompletedProcesses,
-			COUNT(DISTINCT table_process.BeginningOfPeriod) AS BeginningOfPeriod,
-			COUNT(DISTINCT table_process.EndOfPeriod) AS EndOfPeriod									
-			FROM user AS table_user 
-			
-			LEFT JOIN (SELECT pe.user_id AS user_id,			
-			CASE WHEN ps.status_id = 5 AND ps.dt BETWEEN ? AND addtime(?, '23:59:59') THEN p.id END AS CompletedProcesses,			
-			CASE WHEN p.status_id IN(1,2) AND p.status_dt <= addtime(?, '23:59:59') THEN p.id END AS BeginningOfPeriod,			
-			CASE WHEN p.status_id IN(1,2) AND p.status_dt <= addtime(?, '23:59:59') THEN p.id END AS EndOfPeriod			
-			FROM process AS p			 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id 
-			WHERE ps.dt <= addtime(?, '23:59:59')
-			AND p.type_id IN(26,47,49,48)			 	 		
-	 		AND pe.role_id = 0
-	 		AND pe.user_id IN(41,62,75)
-			AND ps.status_id IN(1,2,5)) AS table_process ON table_user.id = table_process.user_id      
-			
-			WHERE table_user.id IN(41,62,75)
-			
-			GROUP BY
-			table_user.title
-			
-			
-		 
-			
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>
-			<sql:param value="${todate}"/>
-			<sql:param value="${todate}"/>			
-			
-		</sql:query>
+	SELECT 
+	process.id,
+	DATE_FORMAT(process.create_dt, '%Y-%m-%d'),
+	param_date.value,
+	DATE_FORMAT(ps.dt, '%Y-%m-%d'),
+	"Дней на проект",
+	process.description,
+	param_address.value,
+	process_type.title,
+	"Есть",
+	param_text.value,
+	param_text1.value,
+	plv.title,
+	"Дата назначения проектировщика",
+	GROUP_CONCAT(DISTINCT user.title SEPARATOR ', '),
+	"Дата готовности проекта",
+	"Дней на проект от заявки",
+	param_date1.value,
+	DATE_FORMAT(ps1.dt, '%Y-%m-%d'),
+	"Дней на стройку",
+	DATE_FORMAT(ps.dt, '%Y-%m-%d'),
+	DATEDIFF(ps.dt,ps1.dt),
+	param_text2.value,
+	param_text3.value
+	FROM process
+	INNER JOIN (SELECT
+				process_status.process_id,
+				MAX(process_status.dt) as dt,
+				process_status.status_id as status_id
+				FROM process_status
+				WHERE (process_status.dt BETWEEN ? AND addtime(?, '23:59:59'))
+				AND process_status.status_id=31   
+				GROUP BY process_status.process_id) AS ps ON process.id = ps.process_id AND ps.status_id=31
+	LEFT JOIN (SELECT
+				process_status.process_id,
+				MAX(process_status.dt) as dt,
+				process_status.status_id as status_id
+				FROM process_status
+				WHERE process_status.status_id=33   
+				GROUP BY process_status.process_id) AS ps1 ON process.id = ps1.process_id AND ps1.status_id=33			
+	LEFT JOIN param_date AS param_date ON process.id = param_date.id AND param_date.param_id = 133
+	LEFT JOIN param_address ON process.id = param_address.id AND param_address.param_id = 42
+	LEFT JOIN param_date AS param_date1 ON process.id = param_date1.id AND param_date1.param_id = 85
+	LEFT JOIN process_type ON process.type_id=process_type.id
+	LEFT JOIN param_text AS param_text ON process.id = param_text.id AND param_text.param_id = 134
+	LEFT JOIN param_text AS param_text1 ON process.id = param_text1.id AND param_text1.param_id = 135
+	LEFT JOIN param_text AS param_text2 ON process.id = param_text2.id AND param_text2.param_id = 137
+	LEFT JOIN param_text AS param_text3 ON process.id = param_text3.id AND param_text3.param_id = 138
+	LEFT JOIN param_list AS param_list ON process.id = param_list.id AND param_list.param_id = 120
+	LEFT JOIN param_list_value AS plv ON param_list.value=plv.id AND plv.param_id=120
+	LEFT JOIN process_executor ON process.id = process_executor.process_id AND process_executor.role_id = 0 AND process_executor.group_id=11
+	LEFT JOIN user ON process_executor.user_id = user.id
+	WHERE process.type_id IN (116,117,118)
+	
+	GROUP BY process.id
+	<sql:param value="${fromdate}"/>
+	<sql:param value="${todate}"/>
 
 		
-		<table style="width: 100%;" class="data mt1">
+	</sql:query>
 			
-		
+	<table style="width: 100%"class="data mt1">
+	<tr>
+	<td>Номер процесса</td>
+	<td>Дата заявки</td>
+	<td>Требуемая дата завершения</td>
+	<td>Дата завершения(факт.)</td>
+	<td>Дней на проект</td>
+	<td>Краткое наименование</td>
+	<td>Адрес</td>
+	<td>Тип заявки</td>
+	<td>Согласование</td>
+	<td>Ёмкость новых абонпортов</td>
+	<td>Прирост новых зданий</td>
+	<td>Тип проекта</td>
+	<td>Дата назначение проектировщика</td>
+	<td>Проектировщик</td>
+	<td>Дата готовности проекта</td>
+	<td>Дней на проект от заявки</td>
+	<td>Планируема дата проведения монтажных работ</td>
+	<td>Дата окончания строительства</td>
+	<td>Дней на стройку</td>
+	<td>Дата приемки проекта</td>
+	<td>Дней на приемку от стройки</td>
+	<td>Стоимость работ по проекту</td>
+	<td>Стоимость монтажных работ</td>
+	</tr>
+		<c:forEach var="row" items="${result.rowsByIndex}">
 			<tr>
-				<td bgcolor=#E6E6FA width="300">Сотрудник</td>
-				<td bgcolor=#E6E6FA width="200">Выполнено заявок</td>
-				<td bgcolor=#E6E6FA width="200">Открытых заявок на начало периода</td>
-				<td bgcolor=#E6E6FA width="200">Открытых заявок на конец периода</td>
-			</tr>	
-
-
-			<c:forEach var="row" items="${result.rowsByIndex}">
+				<td><a href="UNDEF" onclick="openProcess( ${row[0]} ); return false;">${row[0]}</a></td>
+				<td>${row[1]}</td>
+				<td>${row[2]}</td>
+				<td>${row[3]}</td>
+				<td>${row[4]}</td>
+				<td>${row[5]}</td>
+				<td>${row[6]}</td>
+				<td>${row[7]}</td>
+				<td>${row[8]}</td>
+				<td>${row[9]}</td>
+				<td>${row[10]}</td>
+				<td>${row[11]}</td>
+				<td>${row[12]}</td>
+				<td>${row[13]}</td>
+				<td>${row[14]}</td>
+				<td>${row[15]}</td>
+				<td>${row[16]}</td>
+				<td>${row[17]}</td>
+				<td>${row[18]}</td>
+				<td>${row[19]}</td>
+				<td>${row[20]}</td>
+				<td>${row[21]}</td>
+				<td>${row[22]}</td>
 				
-				<c:set var="sotrudniki" value="${row[0]}"/>
-				<c:set var="CompletedProcesses" value="${row[1]}"/>
-				<c:set var="BeginningOfPeriod" value="${row[2]}"/>
-				<c:set var="EndOfPeriod" value="${row[3]}"/>
-						
-				<tr>
-					<td bgcolor=#F5F5F5>${sotrudniki}</td>	
-					<td>${CompletedProcesses}</td>
-					<td>${BeginningOfPeriod}</td>
-					<td>${EndOfPeriod}</td>					
-				</tr>	
+			</tr>
+				</c:forEach>
 				
-						
-			</c:forEach>
-		</table>	
-	</c:if>
-	
-				<c:if test="${not empty fromdate}">
-		<%-- в случае, если Slave база не настроена - будет использована обычная --%>
-		<sql:query var="result" dataSource="${ctxSlaveDataSource}">
-	
-	
-	
-		 	SELECT "Потенциальное подключение 'Интернет'" AS title,
-			COUNT(DISTINCT p.id)
-
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=1
-	 		
 			
-			UNION ALL
-			
-		    SELECT "Потенциальное подключение 'Смотрёшка'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=4
-			
-			UNION ALL 
-			
-			SELECT "Потенциальное подключение 'Видеонаблюдение'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=3
-	 		
-	 		UNION ALL 
-			
-			SELECT "Потенциальное подключение 'Интернет + видеонаблюдение'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=2
-	 		
-	 		UNION ALL 
-			
-			SELECT "Потенциальное подключение 'Кабельное ТВ'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=5
-	 		
-	 		UNION ALL 
-			
-			SELECT "Потенциальное подключение 'Телефония'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=6
-			
- 						
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			
-		</sql:query>
-
-		
-		<table style="width: 100%;" class="data mt1">
-			
-		
-			<tr>
-				<td bgcolor=#E6E6FA width="300">Тип услуги</td>
-				<td bgcolor=#E6E6FA width="200">Количество</td>
-				
-				
-			</tr>	
-
-
-			<c:forEach var="row" items="${result.rowsByIndex}">
-				<c:set var="sum_pr" value="${row[0]}"/>
-				<c:set var="summa" value="${row[1]}"/>
-				
-	
-				
-	
-	
-						
-				<tr>
-					<td bgcolor=#F5F5F5>${sum_pr}</td>	
-					<td>${summa}</td>
-					
-					
-		
-				</tr>	
-				
-						
-			</c:forEach>
-		</table>	
-	</c:if>
-	
-	<c:if test="${not empty fromdate}">
-		<%-- в случае, если Slave база не настроена - будет использована обычная --%>
-		<sql:query var="result" dataSource="${ctxSlaveDataSource}">
-	
-	
-	
-		 	SELECT "Новое подключение 'Интернет'" AS title,
-			COUNT(DISTINCT p.id)
-
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=1
-	 	
-	 		
-			
-			UNION ALL
-			
-		    SELECT "Новое подключение 'Смотрёшка'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=4
-			
-			UNION ALL 
-			
-			SELECT "Новое подключение 'Видеонаблюдение'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=3
-	 		
-	 		UNION ALL 
-			
-			SELECT "Новое подключение 'Интернет + видеонаблюдение'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=2
-	 		
-	 		UNION ALL 
-			
-			SELECT "Новое подключение 'Кабельное ТВ'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=5
-	 		
-	 		UNION ALL 
-			
-			SELECT "Новое подключение 'Телефония'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=6
-			
- 						
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			<sql:param value="${fromdate}"/>		
-			<sql:param value="${todate}"/>
-			
-		</sql:query>
-
-		
-		<table style="width: 100%;" class="data mt1">
-			
-		
-			<tr>
-				<td bgcolor=#E6E6FA width="300">Тип услуги</td>
-				<td bgcolor=#E6E6FA width="200">Количество</td>
-				
-				
-			</tr>	
-
-
-			<c:forEach var="row" items="${result.rowsByIndex}">
-				<c:set var="sum_pr" value="${row[0]}"/>
-				<c:set var="summa" value="${row[1]}"/>
-				
-	
-				
-	
-	
-						
-				<tr>
-					<td bgcolor=#F5F5F5>${sum_pr}</td>	
-					<td>${summa}</td>
-					
-					
-		
-				</tr>	
-				
-						
-			</c:forEach>
-		</table>	
-	</c:if>
-	
-	
+				</table>
+				</c:if> 
 </div>

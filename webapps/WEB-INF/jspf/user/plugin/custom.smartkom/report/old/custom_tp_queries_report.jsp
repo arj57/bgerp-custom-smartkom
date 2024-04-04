@@ -27,7 +27,7 @@
 		<br/>
 		
 <!--         <button type="button"  class="btn-grey ml1 mt05" onclick="openUrlToParent( formUrl( this.form ), $(this.form) )">Сформировать</button> -->
-        <button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this.form, $$.shell.$content(this))">Сформ</button>
+        <button type="button"  class="btn-grey ml1 mt05" onclick="$$.ajax.load(this.form, $$.shell.$content(this))">Сформировать</button>
 	</html:form>
 	
 	<%--

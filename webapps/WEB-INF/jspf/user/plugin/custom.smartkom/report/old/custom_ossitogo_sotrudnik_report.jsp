@@ -59,7 +59,7 @@
 	 		AND pe.user_id IN(41,62,75)
 			AND ps.status_id IN(1,2,5)) AS table_process ON table_user.id = table_process.user_id      
 			
-			WHERE table_user.id IN(41,62,75)
+			WHERE table_user.id IN(41)
 			
 			GROUP BY
 			table_user.title

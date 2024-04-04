@@ -1,8 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ include file="/WEB-INF/jspf/taglibs.jsp"%>
 
-<shell:title text="${l.l('Отчет')}"/>
-<shell:state text="${l.l('Отчет Абонгруппы')}"/>
+<shell:title ltext="Отчет"/>
+<shell:state ltext="Отчет Абонгруппы"/>
 
 <div class="report center1020">
         <%--                                                                                                                                                                                         

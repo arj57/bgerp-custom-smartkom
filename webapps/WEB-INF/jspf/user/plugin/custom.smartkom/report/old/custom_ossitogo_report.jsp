@@ -166,7 +166,8 @@ Dannie.CountID,
 Dannie.summa,
 CASE Dannie.oplata WHEN 0 THEN "Нет" ELSE Dannie.oplata END AS oplata,
 Dannie.transp
-FROM (SELECT
+FROM 
+(SELECT
 'ФГБОУ ВО ОмГМУ Минздрава России' AS title,
 COUNT(p.id) AS CountID,
 20900 AS SUMMA,
@@ -222,7 +223,7 @@ UNION ALL
 SELECT
 'ИП Чащин Юрий Евгеньевич' AS title,
 COUNT(p.id) AS CountID,
-1000,
+3500,
 SUM(CAST(oplata.value AS decimal(15,2))) AS oplata,
 SUM(transp.value) AS transp
 FROM process AS p
@@ -252,7 +253,7 @@ LEFT JOIN param_text AS transp ON p.id = transp.id AND transp.param_id = 94
 WHERE p.close_dt BETWEEN ? AND addtime(?, '23:59:59')
 AND p.type_id = 53 AND customer.id = 3190
 
-UNION ALL
+<%--UNION ALL
 
 SELECT
 'ИП Лысенок Людмила Степановна' AS title,
@@ -268,6 +269,40 @@ LEFT JOIN param_text AS oplata ON p.id = oplata.id AND oplata.param_id = 93
 LEFT JOIN param_text AS transp ON p.id = transp.id AND transp.param_id = 94
 WHERE p.close_dt BETWEEN ? AND addtime(?, '23:59:59')
 AND p.type_id = 53 AND customer.id = 952
+
+UNION ALL
+
+SELECT
+'ООО "КРАСАВЧИК"' AS title,
+COUNT(p.id) AS CountID,
+3000,
+SUM(CAST(oplata.value AS decimal(15,2))) AS oplata,
+SUM(transp.value) AS transp
+FROM process AS p
+LEFT JOIN process_link ON p.id = process_link.process_id AND process_link.object_type = "customer"
+LEFT JOIN customer ON process_link.object_id = customer.id
+LEFT JOIN param_text AS summa ON p.id = summa.id AND summa.param_id = 92
+LEFT JOIN param_text AS oplata ON p.id = oplata.id AND oplata.param_id = 93
+LEFT JOIN param_text AS transp ON p.id = transp.id AND transp.param_id = 94
+WHERE p.close_dt BETWEEN ? AND addtime(?, '23:59:59')
+AND p.type_id = 53 AND customer.id = 3463--%>
+
+UNION ALL
+
+SELECT
+'ИП Коган Сергей Алексеевич' AS title,
+COUNT(p.id) AS CountID,
+1500,
+SUM(CAST(oplata.value AS decimal(15,2))) AS oplata,
+SUM(transp.value) AS transp
+FROM process AS p
+LEFT JOIN process_link ON p.id = process_link.process_id AND process_link.object_type = "customer"
+LEFT JOIN customer ON process_link.object_id = customer.id
+LEFT JOIN param_text AS summa ON p.id = summa.id AND summa.param_id = 92
+LEFT JOIN param_text AS oplata ON p.id = oplata.id AND oplata.param_id = 93
+LEFT JOIN param_text AS transp ON p.id = transp.id AND transp.param_id = 94
+WHERE p.close_dt BETWEEN ? AND addtime(?, '23:59:59')
+AND p.type_id = 53 AND customer.id = 795
 
 
 
@@ -303,6 +338,10 @@ AND p.type_id = 54) AS Dannie
 			<sql:param value="${todate}"/>
 			<sql:param value="${fromdate}"/>		
 			<sql:param value="${todate}"/>
+			
+			
+			
+			
 			
 		</sql:query>
 
@@ -397,7 +436,7 @@ AND p.type_id = 54) AS Dannie
 	
 	
 	
-		 	SELECT "Заволнуев Константин" AS title,
+		 	SELECT "Довлатов Дмитрий" AS title,
 			COUNT(DISTINCT p.id), GROUP_CONCAT(p.id SEPARATOR ',  ')
 
 			FROM process AS p
@@ -408,7 +447,7 @@ AND p.type_id = 54) AS Dannie
 			AND p.type_id IN(51,55,54,58,53)
 	 		AND pg.role_id = 0
 	 		AND pe.role_id = 0
-	 		AND pe.user_id = 130
+	 		AND pe.user_id = 169
 			AND ps.status_id = 5
 			
 			UNION ALL
@@ -443,7 +482,25 @@ AND p.type_id = 54) AS Dannie
 	 		AND pe.user_id = 84
 			AND ps.status_id = 5
 			
+			UNION ALL 
+			
+			SELECT "Заволнуев Константин" AS title,
+			COUNT(DISTINCT p.id), GROUP_CONCAT(p.id SEPARATOR ',  ')
+			
+			FROM process AS p
+			JOIN process_group AS pg ON p.id = pg.process_id 
+			JOIN process_status AS ps ON p.id=ps.process_id 
+			JOIN process_executor AS pe ON p.id=pe.process_id 
+			WHERE ps.dt BETWEEN ? AND ?
+			AND p.type_id IN(51,55,54,58,53)
+	 		AND pg.role_id = 0
+	 		AND pe.role_id = 0
+	 		AND pe.user_id = 130
+			AND ps.status_id = 5
+			
  						
+			<sql:param value="${fromdate}"/>		
+			<sql:param value="${todate}"/>
 			<sql:param value="${fromdate}"/>		
 			<sql:param value="${todate}"/>
 			<sql:param value="${fromdate}"/>		

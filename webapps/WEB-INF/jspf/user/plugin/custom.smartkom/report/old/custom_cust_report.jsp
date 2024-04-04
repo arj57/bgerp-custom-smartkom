@@ -38,8 +38,9 @@
 	SELECT 
 	GROUP_CONCAT(process.id SEPARATOR ',  '),
 	customer.title,
-	GROUP_CONCAT(process_type.title SEPARATOR ',  '),
-	<%--GROUP_CONCAT(param_address.value SEPARATOR ',  ') --%> 
+	GROUP_CONCAT(DATE_FORMAT(process.create_dt, '%Y-%m-%d')SEPARATOR ',  '),
+	<%--GROUP_CONCAT(process_type.title SEPARATOR ',  '),
+	GROUP_CONCAT(param_address.value SEPARATOR ',  ') --%> 
 	param_address.value
 	FROM process
 		LEFT JOIN process_type ON process.type_id = process_type.id 
@@ -65,7 +66,7 @@
 	<tr>
 		<td>Номера процессов</td>
 		<td>Контрагент</td>
-		<td>Тип</td>
+		<td>Дата создания процесса</td>
 		<td>Адрес</td>
 	</tr>
 		<c:forEach var="row" items="${result.rowsByIndex}">

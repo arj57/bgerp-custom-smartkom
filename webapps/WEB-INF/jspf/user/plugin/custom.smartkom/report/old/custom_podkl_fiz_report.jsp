@@ -53,10 +53,9 @@
 	 		AND pe.role_id = 0
 	 		AND param_list.value=1
 	 		
+	 		UNION ALL
 			
-			UNION ALL
-			
-		    SELECT "Потенциальное подключение 'Смотрёшка'" AS title,
+		    SELECT "Потенциальное подключение 'Интернет + ТВ'" AS title,
 			COUNT(DISTINCT p.id)
 			
 			FROM process AS p
@@ -68,7 +67,23 @@
 			AND p.type_id IN(76,77,78)
 	 		AND pg.role_id = 0
 	 		AND pe.role_id = 0
-	 		AND param_list.value=4
+	 		AND param_list.value=2
+			
+			UNION ALL
+			
+		    SELECT "Потенциальное подключение 'Интернет + видеонаблюдение'" AS title,
+			COUNT(DISTINCT p.id)
+			
+			FROM process AS p
+			JOIN process_group AS pg ON p.id = pg.process_id 
+			JOIN process_status AS ps ON p.id=ps.process_id 
+			JOIN process_executor AS pe ON p.id=pe.process_id
+			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
+			WHERE p.create_dt BETWEEN ? AND ?
+			AND p.type_id IN(76,77,78)
+	 		AND pg.role_id = 0
+	 		AND pe.role_id = 0
+	 		AND param_list.value=3
 			
 			UNION ALL 
 			
@@ -84,23 +99,8 @@
 			AND p.type_id IN(76,77,78)
 	 		AND pg.role_id = 0
 	 		AND pe.role_id = 0
-	 		AND param_list.value=3
+	 		AND param_list.value=4
 	 		
-	 		UNION ALL 
-			
-			SELECT "Потенциальное подключение 'Интернет + видеонаблюдение'" AS title,
-			COUNT(DISTINCT p.id)
-			
-			FROM process AS p
-			JOIN process_group AS pg ON p.id = pg.process_id 
-			JOIN process_status AS ps ON p.id=ps.process_id 
-			JOIN process_executor AS pe ON p.id=pe.process_id
-			JOIN param_list ON p.id = param_list.id AND param_list.param_id = 102 
-			WHERE p.create_dt BETWEEN ? AND ?
-			AND p.type_id IN(76,77,78)
-	 		AND pg.role_id = 0
-	 		AND pe.role_id = 0
-	 		AND param_list.value=2
 	 		
 	 		UNION ALL 
 			
@@ -208,7 +208,7 @@
 			
 			UNION ALL
 			
-		    SELECT "Новое подключение 'Смотрёшка'" AS title,
+		    SELECT "Новое подключение 'Интернет + ТВ'" AS title,
 			COUNT(DISTINCT p.id)
 			
 			FROM process AS p
@@ -220,11 +220,11 @@
 			AND p.type_id IN(76,78)
 	 		AND pg.role_id = 0
 	 		AND pe.role_id = 0
-	 		AND param_list.value=4
+	 		AND param_list.value=2
 			
 			UNION ALL 
 			
-			SELECT "Новое подключение 'Видеонаблюдение'" AS title,
+			SELECT "Новое подключение 'Интернет + видеонаблюдение'" AS title,
 			COUNT(DISTINCT p.id)
 			
 			FROM process AS p
@@ -240,7 +240,7 @@
 	 		
 	 		UNION ALL 
 			
-			SELECT "Новое подключение 'Интернет + видеонаблюдение'" AS title,
+			SELECT "Новое подключение 'Видеонаблюдение'" AS title,
 			COUNT(DISTINCT p.id)
 			
 			FROM process AS p
@@ -252,7 +252,7 @@
 			AND p.type_id IN(76,78)
 	 		AND pg.role_id = 0
 	 		AND pe.role_id = 0
-	 		AND param_list.value=2
+	 		AND param_list.value=4
 	 		
 	 		UNION ALL 
 			

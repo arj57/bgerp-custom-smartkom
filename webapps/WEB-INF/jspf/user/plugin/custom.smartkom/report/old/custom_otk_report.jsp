@@ -42,6 +42,8 @@
 		CASE 
 			WHEN param_list.value=1 THEN "Принят"
 			WHEN param_list.value=2 THEN "Отменен"
+			WHEN param_list.value=3 THEN "Проект не принят (нарушение тех политики)"
+			WHEN param_list.value=4 THEN "Осмотр ОТК"
 		END AS param_list_value,
 		podkl.value, 
 		param_text.value, 
