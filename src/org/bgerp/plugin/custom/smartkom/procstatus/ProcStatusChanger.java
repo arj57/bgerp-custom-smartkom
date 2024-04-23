@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgerp.app.cfg.ConfigMap;
 import org.bgerp.app.cfg.Setup;
 import org.bgerp.app.exception.BGException;
 import org.bgerp.util.Log;
+import org.bgerp.app.exec.scheduler.Task;
 
 import ru.bgcrm.struts.action.ProcessAction;
 import ru.bgcrm.struts.form.DynActionForm;
@@ -26,6 +28,8 @@ import ru.bgcrm.model.process.Process;
 import ru.bgcrm.model.process.ProcessType;
 import ru.bgcrm.model.process.StatusChange;
 import ru.bgcrm.model.user.User;
+
+
 
 /**
  *   Скрипт закрывает процессы, находящиется в статусе "Выполнен" дольше заданного
@@ -43,7 +47,7 @@ import ru.bgcrm.model.user.User;
  * 
  * @author alex
  */
-public class ProcStatusChanger implements org.bgerp.app.exec.Runnable {
+public class ProcStatusChanger extends Task implements org.bgerp.app.exec.Runnable {
 
     private static final Log log = Log.getLog();
     private static final int PROCESS_STATUS_READY = 5;
@@ -55,6 +59,10 @@ public class ProcStatusChanger implements org.bgerp.app.exec.Runnable {
 
     private Map<Integer, Integer> liveTimes = new HashMap<>();
 
+    public ProcStatusChanger(ConfigMap config) {
+        super(null);
+    }
+    
     @Override
     public void run() {
 

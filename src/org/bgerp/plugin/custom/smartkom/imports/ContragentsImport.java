@@ -32,11 +32,13 @@ import java.util.stream.Stream;
 
 import javax.xml.xpath.*;
 
+import org.bgerp.app.cfg.ConfigMap;
 import org.bgerp.app.cfg.Setup;
 import org.bgerp.app.exception.BGException;
 import org.bgerp.dao.param.ParamValueDAO;
 import org.bgerp.model.base.IdTitle;
 import org.bgerp.util.Log;
+import org.bgerp.app.exec.scheduler.Task;
 import org.w3c.dom.*;
 
 /**
@@ -70,7 +72,7 @@ import org.w3c.dom.*;
  * 
  * @author alex 2019-08-26
  */
-public class ContragentsImport implements org.bgerp.app.exec.Runnable {
+public class ContragentsImport extends Task implements org.bgerp.app.exec.Runnable {
 
     private static final Log logger = Log.getLog();
     private static final java.util.regex.Pattern CONTRACT_TITLE_PATTERN = java.util.regex.Pattern
@@ -114,6 +116,10 @@ public class ContragentsImport implements org.bgerp.app.exec.Runnable {
     private CustomerLinkDAO customerLinkDAO;
     private BgbContracts bgbcontracts; // = new BgbContracts();
 
+    public ContragentsImport(ConfigMap config) {
+        super(null);
+    }
+    
     public void run() {
 
         logger.info("***** Trying to start import *****");
