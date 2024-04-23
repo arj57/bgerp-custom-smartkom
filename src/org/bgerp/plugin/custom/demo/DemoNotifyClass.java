@@ -2,9 +2,9 @@ package org.bgerp.plugin.custom.demo;
 
 import org.bgerp.util.Log;
 
-import ru.bgcrm.event.Event;
+import org.bgerp.app.event.iface.Event;
 import ru.bgcrm.event.RunClassRequestEvent;
-import ru.bgcrm.event.listener.EventListener;
+import  org.bgerp.app.event.iface.EventListener;
 import ru.bgcrm.util.sql.ConnectionSet;
 
 /**
