@@ -72,16 +72,19 @@ import org.w3c.dom.*;
  * 
  * @author alex 2019-08-26
  */
-public class ContragentsImport extends Task implements org.bgerp.app.exec.Runnable {
+public class ContragentsImport extends Task
+//	implements org.bgerp.app.exec.Runnable 
+	{
 
-    private static final Log logger = Log.getLog();
-    private static final java.util.regex.Pattern CONTRACT_TITLE_PATTERN = java.util.regex.Pattern
-            .compile("Договор № ?([^ ]{1,50})");
-    private static final int CONTRAGENT_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentId.billingParameterId");;
+	private static final boolean ALLOW_UPDATE_BILLING_PARAMETERS = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.allowUpdateBillingParameters", false);
+    private static final int CONTRAGENT_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentId.billingParameterId");
     private static final int PAYEE_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.payeeId.billingParameterId"); // Параметр договора: Получатель платежей
     private static final int CONTRAGENT_CONTACT_PERSON_ERP_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentContactPerson.erpParamemerId");
     private static final Path LOCK_FILE = Paths.get(System.getProperty("user.dir"), ".run", "importer.lock");
     private static final Path IMPORT_PATH = Paths.get(Setup.getSetup().get("custom.smartkom.contragentsImport.directory", "/var/bgerp"));
+    private static final Log logger = Log.getLog();
+    private static final java.util.regex.Pattern CONTRACT_TITLE_PATTERN = java.util.regex.Pattern
+            .compile("Договор № ?([^ ]{1,50})");
 
     private final static Map<String, Integer> relationship2id = Map.of(
             "Оператор", 1, 
@@ -331,15 +334,19 @@ public class ContragentsImport extends Task implements org.bgerp.app.exec.Runnab
                 
                 if( backlink != null && (backlink.isEmpty() || Integer.valueOf(backlink) == this.customer.getId())) {
                     linkCustomerTo(customerSuperContracts.get(0));
-                    updateBacklinkFrom(customerSuperContracts.get(0));
-//                  updateContractCounteragent( customerSuperContracts.get(0));
-                    updateContractPayeeParameter( customerSuperContracts.get(0));
+                    if(ALLOW_UPDATE_BILLING_PARAMETERS) {
+                        updateBacklinkFrom(customerSuperContracts.get(0));
+                        updateContractCounteragent( customerSuperContracts.get(0));
+                        updateContractPayeeParameter( customerSuperContracts.get(0));
+                    }
 
                     for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
                         IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
                         linkCustomerTo(idt);
-                        updateBacklinkFrom(idt);
-//                      updateContractCounteragent(idt);
+                        if(ALLOW_UPDATE_BILLING_PARAMETERS) {
+                            updateBacklinkFrom(idt);
+                            updateContractCounteragent(idt);
+                        }
                     }
                 }
                 else {
@@ -415,7 +422,6 @@ public class ContragentsImport extends Task implements org.bgerp.app.exec.Runnab
         this.bgbcontracts.updateContractCustomerBacklink(bgbContract.getId(), String.valueOf(this.customer.getId()));
     }
 
-    @SuppressWarnings("unused")
     private void updateContractCounteragent(IdTitle bgbContract) throws XPathExpressionException, BGException {
         String xpath = "./contracts/contract[@name='" + bgbContract.getTitle() + "']/@contragent2";
         logger.info("xpath: " + xpath);
