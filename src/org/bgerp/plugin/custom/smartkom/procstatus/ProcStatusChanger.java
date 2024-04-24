@@ -18,6 +18,8 @@ import org.bgerp.app.cfg.Setup;
 import org.bgerp.app.exception.BGException;
 import org.bgerp.util.Log;
 import org.bgerp.app.exec.scheduler.Task;
+import org.bgerp.app.l10n.Localizer;
+import org.bgerp.plugin.kernel.Plugin;
 
 import ru.bgcrm.struts.action.ProcessAction;
 import ru.bgcrm.struts.form.DynActionForm;
@@ -47,7 +49,7 @@ import ru.bgcrm.model.user.User;
  * 
  * @author alex
  */
-public class ProcStatusChanger extends Task implements org.bgerp.app.exec.Runnable {
+public class ProcStatusChanger extends Task {
 
     private static final Log log = Log.getLog();
     private static final int PROCESS_STATUS_READY = 5;
@@ -63,6 +65,11 @@ public class ProcStatusChanger extends Task implements org.bgerp.app.exec.Runnab
         super(null);
     }
     
+    @Override
+    public String getTitle() {
+        return Plugin.INSTANCE.getLocalizer().l("Smartkom Closer of completed processes");
+    }
+
     @Override
     public void run() {
 

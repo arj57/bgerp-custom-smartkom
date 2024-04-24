@@ -37,8 +37,10 @@ import org.bgerp.app.cfg.Setup;
 import org.bgerp.app.exception.BGException;
 import org.bgerp.dao.param.ParamValueDAO;
 import org.bgerp.model.base.IdTitle;
+import org.bgerp.plugin.kernel.Plugin;
 import org.bgerp.util.Log;
 import org.bgerp.app.exec.scheduler.Task;
+import org.bgerp.app.l10n.Localizer;
 import org.w3c.dom.*;
 
 /**
@@ -123,6 +125,11 @@ public class ContragentsImport extends Task
         super(null);
     }
     
+    @Override
+    public String getTitle() {
+        return Plugin.INSTANCE.getLocalizer().l("Smartkom Contragents import");
+    }
+
     public void run() {
 
         logger.info("***** Trying to start import *****");
