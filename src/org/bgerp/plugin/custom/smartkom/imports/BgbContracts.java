@@ -1,8 +1,8 @@
 package org.bgerp.plugin.custom.smartkom.imports;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.bgerp.util.Log;
 
@@ -13,6 +13,7 @@ import ru.bgcrm.model.user.User;
 import ru.bgcrm.plugin.bgbilling.proto.dao.*;
 import ru.bgcrm.plugin.bgbilling.proto.dao.ContractDAO.SearchOptions;
 import ru.bgcrm.plugin.bgbilling.proto.model.Contract;
+import ru.bgcrm.plugin.bgbilling.proto.dao.ContractHierarchyDAO;
 import org.bgerp.app.cfg.Setup;
 
 class BgbContracts {
@@ -24,6 +25,7 @@ class BgbContracts {
     private User user;
     private ContractDAO conDao;
     private ContractParamDAO contractParameterDao;
+	private ContractHierarchyDAO contractHierarchyDAO;
     
     public BgbContracts() throws BGException {
         String login = Setup.getSetup().get("custom.smartkom.ContragentsImport.billingLogin");
@@ -34,6 +36,7 @@ class BgbContracts {
         contractParameterDao = new ContractParamDAO(this.user, billingId);
 //        conDao = new ContractDAO(this.user, billingId);
         conDao = ContractDAO.getInstance(this.user, billingId);
+        contractHierarchyDAO = new ContractHierarchyDAO(this.user, billingId);
     }
     
     public Pageable<IdTitle> searchFor(String title) {
@@ -77,11 +80,12 @@ class BgbContracts {
     }
 
     public List<Contract> getSubcontracts(int contractId) throws BGException{
-        List<Contract> subcontracts = new ArrayList<>();
+    	logger.info("SubIds: " + this.contractHierarchyDAO.getSubContracts(contractId).toString());
+        List<Contract> subcontracts = this.contractHierarchyDAO.getSubContracts(contractId).stream()
+        .map(x -> this.conDao.getContractById(x))
+        .filter(x -> x != null)
+        .collect(Collectors.toList());
         
-        for(int id : conDao.getContractInfo(contractId).getSubContractIds()) {
-            subcontracts.add(conDao.getContractById(id));
-        }
         return subcontracts;
     }
     

@@ -40,7 +40,6 @@ import org.bgerp.model.base.IdTitle;
 import org.bgerp.plugin.kernel.Plugin;
 import org.bgerp.util.Log;
 import org.bgerp.app.exec.scheduler.Task;
-import org.bgerp.app.l10n.Localizer;
 import org.w3c.dom.*;
 
 /**
@@ -78,7 +77,8 @@ public class ContragentsImport extends Task
 //	implements org.bgerp.app.exec.Runnable 
 	{
 
-	private static final boolean ALLOW_UPDATE_BILLING_PARAMETERS = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.allowUpdateBillingParameters", false);
+    private static final boolean ALLOW_UPDATE_BILLING_PARAMETERS = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.allowUpdateBillingParameters", false);
+    private static final boolean REMOVE_FILE_AFTER_IMPORT = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.removeFileAfterImport", false);
     private static final int CONTRAGENT_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentId.billingParameterId");
     private static final int PAYEE_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.payeeId.billingParameterId"); // Параметр договора: Получатель платежей
     private static final int CONTRAGENT_CONTACT_PERSON_ERP_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentContactPerson.erpParamemerId");
@@ -148,7 +148,9 @@ public class ContragentsImport extends Task
                     doImport(path.toString());
                 }
 
-                clearDirectory(IMPORT_PATH);
+                if(REMOVE_FILE_AFTER_IMPORT) {
+                	clearDirectory(IMPORT_PATH);
+                }
             }
         } 
         
@@ -347,6 +349,9 @@ public class ContragentsImport extends Task
                         updateContractPayeeParameter( customerSuperContracts.get(0));
                     }
 
+                    List<Contract> subs = bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId());
+                    logger.info("subs:" + subs.size() + " ::: " + subs.toString());
+                    
                     for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
                         IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
                         linkCustomerTo(idt);
