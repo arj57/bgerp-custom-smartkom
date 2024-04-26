@@ -77,7 +77,6 @@ public class ContragentsImport extends Task
 //	implements org.bgerp.app.exec.Runnable 
 	{
 
-    private static final boolean ALLOW_UPDATE_BILLING_PARAMETERS = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.allowUpdateBillingParameters", false);
     private static final boolean REMOVE_FILE_AFTER_IMPORT = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.removeFileAfterImport", false);
     private static final int CONTRAGENT_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentId.billingParameterId");
     private static final int PAYEE_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.payeeId.billingParameterId"); // Параметр договора: Получатель платежей
@@ -338,16 +337,14 @@ public class ContragentsImport extends Task
             logger.info("customerSuperContracts: " + customerSuperContracts);
             
             if (customerSuperContracts.size() == 1) {
-                String backlink = bgbcontracts.getContractCustomerBacklink(customerSuperContracts.get(0).getId());
+                String backlink = bgbcontracts.getContractCustomerBacklink(customerSuperContracts.get(0).getId()).replaceAll("[\\D.]", "");
                 logger.info("Existent backlink: \"%s\"", backlink);
                 
-                if( backlink != null && (backlink.isEmpty() || Integer.valueOf(backlink) == this.customer.getId())) {
+                if(( backlink != null && (backlink.isEmpty()) || Integer.valueOf(backlink) == this.customer.getId())) {
                     linkCustomerTo(customerSuperContracts.get(0));
-                    if(ALLOW_UPDATE_BILLING_PARAMETERS) {
-                        updateBacklinkFrom(customerSuperContracts.get(0));
-                        updateContractCounteragent( customerSuperContracts.get(0));
-                        updateContractPayeeParameter( customerSuperContracts.get(0));
-                    }
+//                    updateBacklinkFrom(customerSuperContracts.get(0));
+//                    updateContractCounteragent( customerSuperContracts.get(0));
+//                    updateContractPayeeParameter( customerSuperContracts.get(0));
 
                     List<Contract> subs = bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId());
                     logger.info("subs:" + subs.size() + " ::: " + subs.toString());
@@ -355,10 +352,8 @@ public class ContragentsImport extends Task
                     for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
                         IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
                         linkCustomerTo(idt);
-                        if(ALLOW_UPDATE_BILLING_PARAMETERS) {
-                            updateBacklinkFrom(idt);
-                            updateContractCounteragent(idt);
-                        }
+//                        updateBacklinkFrom(idt);
+//                        updateContractCounteragent(idt);
                     }
                 }
                 else {
