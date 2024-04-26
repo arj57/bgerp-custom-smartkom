@@ -314,8 +314,7 @@ public class ContragentsImport extends Task
         
         final String contractTitleAndCommentDelimiter = " \\[";
 //      Удаляем устаревшие линки на договоры  для текущего контрагента
-        customerLinkDAO
-                .deleteLinksWithType(new CommonObjectLink("customer", this.customer.getId(), "contract:bgb", 0, ""));
+        customerLinkDAO.deleteLinksWithType(new CommonObjectLink("customer", this.customer.getId(), "contract:bgb", 0, ""));
 
 //      Список договоров для текущего контрагента
         NodeList nList = XMLUtils.selectNodeList(this.customerNode, "./contracts/contract/@name");
@@ -329,40 +328,45 @@ public class ContragentsImport extends Task
             }
 
             logger.info("ConTitle from input: %s", contractTitle);
-            List<IdTitle> customerSuperContracts = bgbcontracts.searchFor(contractTitle)
-                    .getList().stream()
-                    .filter(idt -> idt.getTitle().trim().split( contractTitleAndCommentDelimiter )[0].equals(contractTitle))
-                    .collect(Collectors.toList());
-
-            logger.info("customerSuperContracts: " + customerSuperContracts);
-            
-            if (customerSuperContracts.size() == 1) {
-                String backlink = bgbcontracts.getContractCustomerBacklink(customerSuperContracts.get(0).getId()).replaceAll("[\\D.]", "");
-                logger.info("Existent backlink: \"%s\"", backlink);
+            Contract superContract = bgbcontracts.getContractByTitle(contractTitle);
+            if(superContract != null) {
                 
-                if(( backlink != null && (backlink.isEmpty()) || Integer.valueOf(backlink) == this.customer.getId())) {
-                    linkCustomerTo(customerSuperContracts.get(0));
-//                    updateBacklinkFrom(customerSuperContracts.get(0));
-//                    updateContractCounteragent( customerSuperContracts.get(0));
-//                    updateContractPayeeParameter( customerSuperContracts.get(0));
-
-                    List<Contract> subs = bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId());
-                    logger.info("subs:" + subs.size() + " ::: " + subs.toString());
-                    
-                    for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
-                        IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
-                        linkCustomerTo(idt);
-//                        updateBacklinkFrom(idt);
-//                        updateContractCounteragent(idt);
-                    }
-                }
-                else {
-                    logger.warn("Договор %s уже привязан к контрагенту с id %s. Пропускаем привязку.", 
-                            contractTitle, backlink);
-                }
-            } else if (customerSuperContracts.size() > 1) {
-                logger.warn("Найдено более одного договора с номером, похожим на '%s'", contractTitle);
             }
+            
+//            List<IdTitle> customerSuperContracts = bgbcontracts.searchFor(contractTitle)
+//                    .getList().stream()
+//                    .filter(idt -> idt.getTitle().trim().split( contractTitleAndCommentDelimiter )[0].equals(contractTitle))
+//                    .collect(Collectors.toList());
+//
+//            logger.info("customerSuperContracts: " + customerSuperContracts);
+//            
+//            if (customerSuperContracts.size() == 1) {
+//                String backlink = bgbcontracts.getContractCustomerBacklink(customerSuperContracts.get(0).getId()).replaceAll("[\\D.]", "");
+//                logger.info("Existent backlink: \"%s\"", backlink);
+//                
+//                if(( backlink != null && (backlink.isEmpty()) || Integer.valueOf(backlink) == this.customer.getId())) {
+//                    linkCustomerTo(customerSuperContracts.get(0));
+////                    updateBacklinkFrom(customerSuperContracts.get(0));
+////                    updateContractCounteragent( customerSuperContracts.get(0));
+////                    updateContractPayeeParameter( customerSuperContracts.get(0));
+//
+//                    List<Contract> subs = bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId());
+//                    logger.info("subs:" + subs.size() + " ::: " + subs.toString());
+//                    
+//                    for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
+//                        IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
+//                        linkCustomerTo(idt);
+////                        updateBacklinkFrom(idt);
+////                        updateContractCounteragent(idt);
+//                    }
+//                }
+//                else {
+//                    logger.warn("Договор %s уже привязан к контрагенту с id %s. Пропускаем привязку.", 
+//                            contractTitle, backlink);
+//                }
+//            } else if (customerSuperContracts.size() > 1) {
+//                logger.warn("Найдено более одного договора с номером, похожим на '%s'", contractTitle);
+//            }
         }
     }
 
