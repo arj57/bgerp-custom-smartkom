@@ -5,7 +5,6 @@ import ru.bgcrm.dao.CustomerLinkDAO;
 import ru.bgcrm.model.CommonObjectLink;
 import ru.bgcrm.model.customer.Customer;
 import ru.bgcrm.model.param.*;
-import ru.bgcrm.plugin.bgbilling.proto.model.Contract;
 import ru.bgcrm.util.Utils;
 import ru.bgcrm.util.sql.SQLUtils;
 import ru.bgcrm.util.XMLUtils;
@@ -74,12 +73,9 @@ import org.w3c.dom.*;
  * @author alex 2019-08-26
  */
 public class ContragentsImport extends Task
-//	implements org.bgerp.app.exec.Runnable 
 	{
 
     private static final boolean REMOVE_FILE_AFTER_IMPORT = Setup.getSetup().getBoolean("custom.smartkom.ContragentsImport.removeFileAfterImport", false);
-    private static final int CONTRAGENT_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentId.billingParameterId");
-    private static final int PAYEE_ID_BGB_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.payeeId.billingParameterId"); // Параметр договора: Получатель платежей
     private static final int CONTRAGENT_CONTACT_PERSON_ERP_PARAMETER_ID = Setup.getSetup().getInt("custom.smartkom.ContragentsImport.contragentContactPerson.erpParamemerId");
     private static final Path LOCK_FILE = Paths.get(System.getProperty("user.dir"), ".run", "importer.lock");
     private static final Path IMPORT_PATH = Paths.get(Setup.getSetup().get("custom.smartkom.contragentsImport.directory", "/var/bgerp"));
@@ -102,20 +98,9 @@ public class ContragentsImport extends Task
             "B - класс", 3, 
             "C - класс", 4);
     
-//  Элементы списка. Списочный параметр в биллинге
-    private final static Map<String, Integer> CONTRAGENT_TO_ID = Map.of(
-            "ООО \"Матрикснет\"", 21, 
-            "ЗАО \"Смартком\"", 20);
-    
-//  Элементы списка. Списочный параметр в биллинге
-    private final static Map<String, Integer> PAYEE_TO_ID = Map.of(
-            "ООО \"Матрикснет\"", 13, 
-            "ЗАО \"Смартком\"", 14);
-
     private Connection con;
     private ParamValueDAO pvDao;
     private CustomerDAO custDao;
-    private Customer customer;
     private Node customerNode;
     private CustomerLinkDAO customerLinkDAO;
     private BgbContracts bgbcontracts; // = new BgbContracts();
@@ -230,16 +215,16 @@ public class ContragentsImport extends Task
                     List<Integer> custIds = searchCustomersIdsByInn(inn);
                     if (custIds.size() == 0) { // Новый контрагент
                         logger.info("New inn: " + inn);
-                        this.customer = new Customer();
-                        updateCustomerParameters(this.customer);
+                        Customer customer = new Customer();
+                        updateCustomerParameters(customer);
                     }
     
                     else if (custIds.size() == 1) { // обновляем для существующего
                         logger.info("Existent inn: " + inn);
-                        this.customer = this.custDao.getCustomerById(custIds.get(0));
-                        logger.info("Customer id: " + this.customer.getId());
-                        deleteCustomerParameters(this.customer);
-                        updateCustomerParameters(this.customer);
+                        Customer customer = this.custDao.getCustomerById(custIds.get(0));
+                        logger.info("Customer id: " + customer.getId());
+                        deleteCustomerParameters(customer);
+                        updateCustomerParameters(customer);
                     }
     
                     else {
@@ -271,23 +256,23 @@ public class ContragentsImport extends Task
 //    customer Id еще равен 0
         new ru.bgcrm.dao.CustomerDAO(this.con).updateCustomer(customer);
 //      Здесь уже реальный Id
-        updateParamContactPersons(null, null);
+        updateParamContactPersons(customer);
 
-        updateParamText("./@fullName", 2);
-        updateParamText("./@diadoc", 57);
-        updateParamText("./@shortName", 1);
-        updateParamText("./@inn", 37);
-        updateParamText("./@kpp", 51);
-        updateParamText("./@holding", 55);
+        updateParamText("./@fullName", 2, customer);
+        updateParamText("./@diadoc", 57, customer);
+        updateParamText("./@shortName", 1, customer);
+        updateParamText("./@inn", 37, customer);
+        updateParamText("./@kpp", 51, customer);
+        updateParamText("./@holding", 55, customer);
 
-        updateParamList("./@relationtype", 54, relationship2id); // тип отношений
-        updateParamList("./@importance", 56, IMPORTANCE_TO_ID); // важность
+        updateParamList("./@relationtype", 54, relationship2id, customer); // тип отношений
+        updateParamList("./@importance", 56, IMPORTANCE_TO_ID, customer); // важность
 
-        updateParamManagers(53);
-        updateParamEmail("@type='tech'", 11);
-        updateParamEmail("@type='doc'", 12);
-        updateParamPhones(6);
-        addBgbContractsLinks();
+        updateParamManagers(53, customer);
+        updateParamEmail("@type='tech'", 11, customer);
+        updateParamEmail("@type='doc'", 12, customer);
+        updateParamPhones(6, customer);
+        addBgbContractsLinks(customer);
 
         SQLUtils.commitConnection(this.con);
 
@@ -310,11 +295,10 @@ public class ContragentsImport extends Task
         return res;
     }
 
-    private void addBgbContractsLinks() throws XPathExpressionException, BGException, SQLException {
+    private void addBgbContractsLinks(Customer customer) throws XPathExpressionException, BGException, SQLException {
         
-        final String contractTitleAndCommentDelimiter = " \\[";
 //      Удаляем устаревшие линки на договоры  для текущего контрагента
-        customerLinkDAO.deleteLinksWithType(new CommonObjectLink("customer", this.customer.getId(), "contract:bgb", 0, ""));
+        customerLinkDAO.deleteLinksWithType(new CommonObjectLink("customer", customer.getId(), "contract:bgb", 0, ""));
 
 //      Список договоров для текущего контрагента
         NodeList nList = XMLUtils.selectNodeList(this.customerNode, "./contracts/contract/@name");
@@ -328,67 +312,42 @@ public class ContragentsImport extends Task
             }
 
             logger.info("ConTitle from input: %s", contractTitle);
-            Contract superContract = bgbcontracts.getContractByTitle(contractTitle);
-            if(superContract != null) {
-                
-            }
+            IdTitle superContract = bgbcontracts.getContractIdTitleByTitle(contractTitle);
             
-//            List<IdTitle> customerSuperContracts = bgbcontracts.searchFor(contractTitle)
-//                    .getList().stream()
-//                    .filter(idt -> idt.getTitle().trim().split( contractTitleAndCommentDelimiter )[0].equals(contractTitle))
-//                    .collect(Collectors.toList());
-//
-//            logger.info("customerSuperContracts: " + customerSuperContracts);
-//            
-//            if (customerSuperContracts.size() == 1) {
-//                String backlink = bgbcontracts.getContractCustomerBacklink(customerSuperContracts.get(0).getId()).replaceAll("[\\D.]", "");
-//                logger.info("Existent backlink: \"%s\"", backlink);
-//                
-//                if(( backlink != null && (backlink.isEmpty()) || Integer.valueOf(backlink) == this.customer.getId())) {
-//                    linkCustomerTo(customerSuperContracts.get(0));
-////                    updateBacklinkFrom(customerSuperContracts.get(0));
-////                    updateContractCounteragent( customerSuperContracts.get(0));
-////                    updateContractPayeeParameter( customerSuperContracts.get(0));
-//
-//                    List<Contract> subs = bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId());
-//                    logger.info("subs:" + subs.size() + " ::: " + subs.toString());
-//                    
-//                    for (Contract subcontract : bgbcontracts.getSubcontracts(customerSuperContracts.get(0).getId())) {
-//                        IdTitle idt = new IdTitle(subcontract.getId(), subcontract.getTitle());
-//                        linkCustomerTo(idt);
-////                        updateBacklinkFrom(idt);
-////                        updateContractCounteragent(idt);
-//                    }
-//                }
-//                else {
-//                    logger.warn("Договор %s уже привязан к контрагенту с id %s. Пропускаем привязку.", 
-//                            contractTitle, backlink);
-//                }
-//            } else if (customerSuperContracts.size() > 1) {
-//                logger.warn("Найдено более одного договора с номером, похожим на '%s'", contractTitle);
-//            }
+            if(superContract != null) {
+                logger.info("Super IdTitle: %s", superContract == null ? "null" : superContract.toString());
+                linkCustomerTo(superContract, customer);
+//              updateBacklinkFrom(idt);
+                for (IdTitle subcontract : bgbcontracts.getSubcontracts(superContract.getId())) {
+                    if(subcontract != null) {
+                        logger.info("Sub IdTitle: %s", subcontract == null ? "null" : subcontract.toString());
+                        linkCustomerTo(subcontract, customer);
+//                      updateBacklinkFrom(idt);
+                    }
+                }
+            }
         }
     }
 
-    private void linkCustomerTo(IdTitle customerContract) throws BGException {
+    private void linkCustomerTo(IdTitle contract, Customer customer) throws BGException {
         logger.info("Customer id %d linked to contractId = %d (%s)", 
-                this.customer.getId(), customerContract.getId(), customerContract.getTitle());
+                customer.getId(), contract.getId(), contract.getTitle());
 
-        CommonObjectLink link = new CommonObjectLink("customer", this.customer.getId(), "contract:bgb",
-                customerContract.getId(), customerContract.getTitle());
+        CommonObjectLink link = new CommonObjectLink("customer", customer.getId(), "contract:bgb",
+                contract.getId(), contract.getTitle());
 
         // Привязываем к контрагенту договоры из биллинга
         customerLinkDAO.deleteLinksTo(link);
         customerLinkDAO.addLink(link);
     }
 
-    private void updateParamText(String xPath, int paramId) throws XPathExpressionException, BGException, SQLException {
+    private void updateParamText(String xPath, int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
         String val = getInputParam(xPath);
         if (! Utils.isEmptyString(val))
-            this.pvDao.updateParamText(this.customer.getId(), paramId, val);
+            this.pvDao.updateParamText(customer.getId(), paramId, val);
     }
 
-    private void updateParamManagers(int paramId) throws DOMException, XPathExpressionException, BGException, SQLException {
+    private void updateParamManagers(int paramId, Customer customer) throws DOMException, XPathExpressionException, BGException, SQLException {
         StringBuffer managers = new StringBuffer();
 
         NodeList nList1 = XMLUtils.selectNodeList(customerNode, "managers/manager[@type='main']/text()");
@@ -401,7 +360,7 @@ public class ContragentsImport extends Task
         pvDao.updateParamText(customer.getId(), paramId, managers.toString());
     }
 
-    private void updateParamEmail(String emailAttr, int paramId)
+    private void updateParamEmail(String emailAttr, int paramId, Customer customer)
             throws DOMException, XPathExpressionException, BGException, SQLException {
         
         final int insertModePosition = 0;
@@ -413,7 +372,7 @@ public class ContragentsImport extends Task
         }
     }
 
-    private void updateParamPhones(int paramId) throws XPathExpressionException, BGException, SQLException {
+    private void updateParamPhones(int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
         ParameterPhoneValue phones = new ParameterPhoneValue();
 
         NodeList nodes = XMLUtils.selectNodeList(this.customerNode, "contact/phones/phone/text()");
@@ -429,36 +388,23 @@ public class ContragentsImport extends Task
         }
     }
 
-    private void updateBacklinkFrom(IdTitle bgbContract) throws BGException {
-        this.bgbcontracts.updateContractCustomerBacklink(bgbContract.getId(), String.valueOf(this.customer.getId()));
-    }
+//    private void updateBacklinkFrom(IdTitle bgbContract, Customer customer) throws BGException {
+//        this.bgbcontracts.updateContractCustomerBacklink(bgbContract.getId(), String.valueOf(customer.getId()));
+//    }
 
-    private void updateContractCounteragent(IdTitle bgbContract) throws XPathExpressionException, BGException {
-        String xpath = "./contracts/contract[@name='" + bgbContract.getTitle() + "']/@contragent2";
-        logger.info("xpath: " + xpath);
+//    private void updateContractCounteragent(IdTitle bgbContract) throws XPathExpressionException, BGException {
+//        String xpath = "./contracts/contract[@name='" + bgbContract.getTitle() + "']/@contragent2";
+//        logger.info("xpath: " + xpath);
+//
+////        String strVal = Parser.unescapeEntities( getInputParam(xpath), true);
+//        String strVal = getInputParam(xpath);
+//        int val = CONTRAGENT_TO_ID.getOrDefault(strVal, -1);
+//        logger.info("Contragent2: %s(%d)", strVal, val);
+//
+//        this.bgbcontracts.updateContractListParam(bgbContract.getId(), CONTRAGENT_ID_BGB_PARAMETER_ID, val);
+//    }
 
-//        String strVal = Parser.unescapeEntities( getInputParam(xpath), true);
-        String strVal = getInputParam(xpath);
-        int val = CONTRAGENT_TO_ID.getOrDefault(strVal, -1);
-        logger.info("Contragent2: %s(%d)", strVal, val);
-
-        this.bgbcontracts.updateContractListParam(bgbContract.getId(), CONTRAGENT_ID_BGB_PARAMETER_ID, val);
-    }
-
-    private void updateContractPayeeParameter(IdTitle bgbContract) throws XPathExpressionException, BGException {
-        final String contractTitleAndCommentDelimiter = " \\[";
-        String xpath = "./contracts/contract[@name='" + bgbContract.getTitle().split( contractTitleAndCommentDelimiter )[0] + "']/@contragent2";
-        logger.info("xpath: " + xpath);
-
-//        String strVal = Parser.unescapeEntities( getInputParam(xpath), true);
-        String strVal = getInputParam(xpath);
-        int val = PAYEE_TO_ID.getOrDefault(strVal, -1);
-        logger.info("Payee: %s(%d)", strVal, val);
-
-        this.bgbcontracts.updateContractListParam(bgbContract.getId(), PAYEE_ID_BGB_PARAMETER_ID, val);
-    }
-
-    private void updateParamContactPersons(Element node, String dataXpath)
+    private void updateParamContactPersons(Customer customer)
             throws XPathExpressionException, BGException, SQLException {
         /*
          * Имя: <name>, должность: <office>, роль: <role>, email: <email>,
@@ -492,7 +438,7 @@ public class ContragentsImport extends Task
         }
 
         logger.info("Persons data: " + allPersonsData.toString());
-        this.pvDao.updateParamBlob(this.customer.getId(), CONTRAGENT_CONTACT_PERSON_ERP_PARAMETER_ID,
+        this.pvDao.updateParamBlob(customer.getId(), CONTRAGENT_CONTACT_PERSON_ERP_PARAMETER_ID,
                 allPersonsData.toString());
 
     }
@@ -539,15 +485,15 @@ public class ContragentsImport extends Task
      * @throws BGException
      * @throws SQLException 
      */
-    private boolean updateParamList(String xPath, int paramId, Map<String, Integer> val2id)
+    private boolean updateParamList(String xPath, int paramId, Map<String, Integer> val2id, Customer customer)
             throws XPathExpressionException, BGException, SQLException {
         boolean res = false;
         String strVal = getInputParam(xPath);
         int val = val2id.getOrDefault(strVal, -1);
-        logger.info("CustomerId: %d xPath: %s Value: %s Val.Id: %d", this.customer.getId(), xPath, strVal, val);
+        logger.info("CustomerId: %d xPath: %s Value: %s Val.Id: %d", customer.getId(), xPath, strVal, val);
 
         if (strVal != "" && val > 0) {
-            this.pvDao.updateParamList(this.customer.getId(), paramId, new HashSet<Integer>(Arrays.asList(val)));
+            this.pvDao.updateParamList(customer.getId(), paramId, new HashSet<Integer>(Arrays.asList(val)));
             res = true;
         }
         return res;
