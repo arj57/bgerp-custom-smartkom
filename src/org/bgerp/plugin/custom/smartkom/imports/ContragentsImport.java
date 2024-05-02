@@ -203,7 +203,7 @@ public class ContragentsImport extends Task
                 NodeList nList = XMLUtils.selectNodeList(root, "contragent");
     
                 for (int i = 0; i < nList.getLength(); i++) {
-                    this.customerNode = nList.item(i);
+                    this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
                     String inn = getInputParam("./@inn");
                     logger.info("inn: '%s'", inn);
                     if (!InnChecker.isInnValid(inn)) {
