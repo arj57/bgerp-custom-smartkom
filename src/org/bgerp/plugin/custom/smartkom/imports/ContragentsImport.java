@@ -83,7 +83,7 @@ public class ContragentsImport extends Task
     private static final java.util.regex.Pattern CONTRACT_TITLE_PATTERN = java.util.regex.Pattern
             .compile("Договор № ?([^ ]{1,50})");
 
-    private final static Map<String, Integer> relationship2id = Map.of(
+    private final static Map<String, Integer> RELATIONSHIP_TO_ID = Map.of(
             "Оператор", 1, 
             "Покупатель", 2, 
             "Покупатель/Поставщик", 3, 
@@ -204,11 +204,12 @@ public class ContragentsImport extends Task
     
                 for (int i = 0; i < nList.getLength(); i++) {
                     this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
-                    String inn = getInputParam("./@inn");
+                    String inn = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@inn"), "");
                     logger.info("inn: '%s'", inn);
                     if (!InnChecker.isInnValid(inn)) {
+                        String fullName = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
                         logger.warn("Некорректный ИНН: %s для контрагента %s. Пропускаем.", 
-                                inn, getInputParam("./@fullName"));
+                                inn, fullName);
                         continue;
                     }
     
@@ -228,8 +229,9 @@ public class ContragentsImport extends Task
                     }
     
                     else {
+                        String fullName = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
                         logger.warn("Не уникальный ИНН: %s для контрагента %s. Такие же ИНН есть у контрагентов с Id %s. Пропускаем.",
-                                inn, getInputParam("./@fullName"), custIds.toString());
+                                inn, fullName, custIds.toString());
                         continue;
                     }
                 }
@@ -250,7 +252,8 @@ public class ContragentsImport extends Task
 
     private void updateCustomerParameters(Customer customer)
             throws SQLException, XPathExpressionException, BGException {
-        customer.setTitle(getInputParam("./@fullName"));
+        String title = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
+        customer.setTitle(title);
         customer.setParamGroupId(1);
 
 //    customer Id еще равен 0
@@ -258,14 +261,18 @@ public class ContragentsImport extends Task
 //      Здесь уже реальный Id
         updateParamContactPersons(customer);
 
+        updateParamText("./@id", 162, customer);
         updateParamText("./@fullName", 2, customer);
         updateParamText("./@diadoc", 57, customer);
         updateParamText("./@shortName", 1, customer);
         updateParamText("./@inn", 37, customer);
         updateParamText("./@kpp", 51, customer);
         updateParamText("./@holding", 55, customer);
+        
+        updateTechContact(customer);
+        updateFinContact(customer);
 
-        updateParamList("./@relationtype", 54, relationship2id, customer); // тип отношений
+        updateParamList("./@relationtype", 54, RELATIONSHIP_TO_ID, customer); // тип отношений
         updateParamList("./@importance", 56, IMPORTANCE_TO_ID, customer); // важность
 
         updateParamManagers(53, customer);
@@ -342,7 +349,11 @@ public class ContragentsImport extends Task
     }
 
     private void updateParamText(String xPath, int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
-        String val = getInputParam(xPath);
+        updateParamText(this.customerNode, xPath, paramId, customer);
+    }
+
+    private void updateParamText(Node node, String xPath, int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
+        String val = Utils.maskEmpty( XMLUtils.selectText(node, xPath), "");
         if (! Utils.isEmptyString(val))
             this.pvDao.updateParamText(customer.getId(), paramId, val);
     }
@@ -403,6 +414,44 @@ public class ContragentsImport extends Task
 //
 //        this.bgbcontracts.updateContractListParam(bgbContract.getId(), CONTRAGENT_ID_BGB_PARAMETER_ID, val);
 //    }
+
+    private void updateTechContact(Customer customer) throws XPathExpressionException, BGException, SQLException {
+        final int TECH_CONTACT_PERSON_PARAM_ID = 7;
+        final int TECH_CONTACT_EMAIL_PARAM_ID = 11;
+        final int TECH_CONTACT_PHONE_PARAM_ID = 159;
+        
+        Node node = XMLUtils.selectNode(this.customerNode, "./contactPersons/person[role='Технические вопросы'][1]");
+        updateParamText("./@name", TECH_CONTACT_PERSON_PARAM_ID, customer);
+        updateEmailForContactPerson(node, TECH_CONTACT_EMAIL_PARAM_ID, customer);
+        updatePhoneForContactPerson(node, TECH_CONTACT_PHONE_PARAM_ID, customer);
+    }
+    
+    private void updateFinContact(Customer customer) throws XPathExpressionException, BGException, SQLException {
+        final int FIN_CONTACT_PERSON_PARAM_ID = 161;
+        final int FIN_CONTACT_EMAIL_PARAM_ID = 157;
+        final int FIN_CONTACT_PHONE_PARAM_ID = 160;
+        
+        Node node = XMLUtils.selectNode(this.customerNode, "./contactPersons/person[role='Финансовые вопросы'][1]");
+        updateParamText("./@name", FIN_CONTACT_PERSON_PARAM_ID, customer);
+        updateEmailForContactPerson(node, FIN_CONTACT_EMAIL_PARAM_ID, customer);
+        updatePhoneForContactPerson(node, FIN_CONTACT_PHONE_PARAM_ID, customer);
+    }
+    
+    private void updatePhoneForContactPerson(Node personNode, int paramId, Customer customer) throws SQLException {
+        ParameterPhoneValue phones = new ParameterPhoneValue();
+
+        String strPhone = Utils.maskEmpty( XMLUtils.selectText(personNode, "./phones/phone[1]"), "");
+        strPhone = normalizePhoneNumber(strPhone);
+        ParameterPhoneValueItem item = new ParameterPhoneValueItem(strPhone, "");
+        phones.addItem(item);
+        pvDao.updateParamPhone(customer.getId(), paramId, phones);
+    }
+
+    private void updateEmailForContactPerson(Node personNode, int paramId, Customer customer) throws SQLException {
+        String val = Utils.maskEmpty( XMLUtils.selectText(personNode, "./emails/email[1]"), "");
+        pvDao.updateParamEmail(customer.getId(), paramId, 0, new ParameterEmailValue(val));
+        
+    }
 
     private void updateParamContactPersons(Customer customer)
             throws XPathExpressionException, BGException, SQLException {
@@ -471,10 +520,6 @@ public class ContragentsImport extends Task
         return phNumber;
     }
 
-    private String getInputParam(String xPath) throws XPathExpressionException {
-        return Utils.maskEmpty( XMLUtils.selectText(this.customerNode, xPath), "");
-    }
-
     /**
      * Сохраняет параметр типа List, если у него валидное значение
      * 
@@ -488,7 +533,7 @@ public class ContragentsImport extends Task
     private boolean updateParamList(String xPath, int paramId, Map<String, Integer> val2id, Customer customer)
             throws XPathExpressionException, BGException, SQLException {
         boolean res = false;
-        String strVal = getInputParam(xPath);
+        String strVal = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, xPath), "");
         int val = val2id.getOrDefault(strVal, -1);
         logger.info("CustomerId: %d xPath: %s Value: %s Val.Id: %d", customer.getId(), xPath, strVal, val);
 
