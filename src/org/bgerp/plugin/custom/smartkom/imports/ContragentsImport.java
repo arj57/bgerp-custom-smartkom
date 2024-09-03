@@ -426,9 +426,11 @@ public class ContragentsImport extends Task
         final int TECH_CONTACT_PHONE_PARAM_ID = 159;
         
         Node node = XMLUtils.selectNode(this.customerNode, "./contactPersons/person[role='Технические вопросы'][1]");
-        updateParamText(node, "./@name", TECH_CONTACT_PERSON_PARAM_ID, customer);
-        updateEmailForContactPerson(node, TECH_CONTACT_EMAIL_PARAM_ID, customer);
-        updatePhoneForContactPerson(node, TECH_CONTACT_PHONE_PARAM_ID, customer);
+        if(node != null) {
+            updateParamText(node, "./@name", TECH_CONTACT_PERSON_PARAM_ID, customer);
+            updateEmailForContactPerson(node, TECH_CONTACT_EMAIL_PARAM_ID, customer);
+            updatePhoneForContactPerson(node, TECH_CONTACT_PHONE_PARAM_ID, customer);
+        }
     }
     
     private void updateFinContactParameters(Customer customer) throws XPathExpressionException, BGException, SQLException {
@@ -437,27 +439,32 @@ public class ContragentsImport extends Task
         final int FIN_CONTACT_PHONE_PARAM_ID = 160;
         
         Node node = XMLUtils.selectNode(this.customerNode, "./contactPersons/person[role='Финансовые вопросы'][1]");
-        updateParamText(node, "./@name", FIN_CONTACT_PERSON_PARAM_ID, customer);
-        updateEmailForContactPerson(node, FIN_CONTACT_EMAIL_PARAM_ID, customer);
-        updatePhoneForContactPerson(node, FIN_CONTACT_PHONE_PARAM_ID, customer);
+        if(node != null) {
+            updateParamText(node, "./@name", FIN_CONTACT_PERSON_PARAM_ID, customer);
+            updateEmailForContactPerson(node, FIN_CONTACT_EMAIL_PARAM_ID, customer);
+            updatePhoneForContactPerson(node, FIN_CONTACT_PHONE_PARAM_ID, customer);
+        }
     }
     
     private void updatePhoneForContactPerson(Node personNode, int paramId, Customer customer) throws SQLException {
         ParameterPhoneValue phones = new ParameterPhoneValue();
 
         String strPhone = Utils.maskEmpty( XMLUtils.selectText(personNode, "./phones/phone[1]/text()"), "");
-        strPhone = normalizePhoneNumber(strPhone);
-        ParameterPhoneValueItem item = new ParameterPhoneValueItem(strPhone, "");
-        phones.addItem(item);
-        pvDao.updateParamPhone(customer.getId(), paramId, phones);
+        if(!strPhone.isEmpty()) {
+            strPhone = normalizePhoneNumber(strPhone);
+            ParameterPhoneValueItem item = new ParameterPhoneValueItem(strPhone, "");
+            phones.addItem(item);
+            pvDao.updateParamPhone(customer.getId(), paramId, phones);
+        }
     }
 
     private void updateEmailForContactPerson(Node personNode, int paramId, Customer customer) throws SQLException {
         
         String val = XMLUtils.selectText(personNode, "emails/email[1]/text()", "");
         logger.info("email xPath:  '{}' val: '{}', nodeName: '{}'", "./emails/email[1]/text()", val, personNode.getNodeName());
-        pvDao.updateParamEmail(customer.getId(), paramId, 0, new ParameterEmailValue(val));
-        
+        if (!val.isEmpty()) {
+            pvDao.updateParamEmail(customer.getId(), paramId, 0, new ParameterEmailValue(val));
+        }
     }
 
     private void updateContactPersonsParam(Customer customer)
