@@ -252,37 +252,41 @@ public class ContragentsImport extends Task
 
     private void updateCustomerParameters(Customer customer)
             throws SQLException, XPathExpressionException, BGException {
-        String title = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
+        
+        final int CUSTOMER_PARAM_GROUP_ID = 1;
+        
+        String title = XMLUtils.selectText(this.customerNode, "./@fullName", "");
         customer.setTitle(title);
-        customer.setParamGroupId(1);
+        customer.setParamGroupId(CUSTOMER_PARAM_GROUP_ID);
 
 //    customer Id еще равен 0
         new ru.bgcrm.dao.CustomerDAO(this.con).updateCustomer(customer);
 //      Здесь уже реальный Id
-        updateParamContactPersons(customer);
+        updateParametersFromCustomerAttributes(customer);
+        updateContactPersonsParam(customer);
+        updateTechContactParameters(customer);
+        updateFinContactParameters(customer);
+        updateManagersParam(53, customer);
+        updatePhonesParam(6, customer);
+        
+        addBgbContractsLinks(customer);
 
-        updateParamText("./@id", 162, customer);
+        SQLUtils.commitConnection(this.con);
+    }
+    
+    private void updateParametersFromCustomerAttributes(Customer customer) throws XPathExpressionException, BGException, SQLException {
+        updateParamText("./@id", 162, customer); // id from 1C. Primary key.
         updateParamText("./@fullName", 2, customer);
         updateParamText("./@diadoc", 57, customer);
         updateParamText("./@shortName", 1, customer);
         updateParamText("./@inn", 37, customer);
         updateParamText("./@kpp", 51, customer);
         updateParamText("./@holding", 55, customer);
-        
-        updateTechContact(customer);
-        updateFinContact(customer);
-
         updateParamList("./@relationtype", 54, RELATIONSHIP_TO_ID, customer); // тип отношений
         updateParamList("./@importance", 56, IMPORTANCE_TO_ID, customer); // важность
-
-        updateParamManagers(53, customer);
-        updateParamEmail("@type='tech'", 11, customer);
+        updateParamEmail("@type='tech'", 11, customer); // tech counteragent's email
         updateParamEmail("@type='doc'", 12, customer);
-        updateParamPhones(6, customer);
-        addBgbContractsLinks(customer);
-
-        SQLUtils.commitConnection(this.con);
-
+        
     }
 
     private List<Integer> searchCustomersIdsByInn(String inn) throws SQLException {
@@ -354,12 +358,12 @@ public class ContragentsImport extends Task
 
     private void updateParamText(Node node, String xPath, int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
         String val = Utils.maskEmpty( XMLUtils.selectText(node, xPath), "");
-//        logger.info("xPath: '{}' paramId: '{}' val: '{}'", xPath, paramId, val);
+        logger.debug("xPath: '{}' paramId: '{}' val: '{}'", xPath, paramId, val);
         if (! Utils.isEmptyString(val))
             this.pvDao.updateParamText(customer.getId(), paramId, val);
     }
 
-    private void updateParamManagers(int paramId, Customer customer) throws DOMException, XPathExpressionException, BGException, SQLException {
+    private void updateManagersParam(int paramId, Customer customer) throws DOMException, XPathExpressionException, BGException, SQLException {
         StringBuffer managers = new StringBuffer();
 
         NodeList nList1 = XMLUtils.selectNodeList(customerNode, "managers/manager[@type='main']/text()");
@@ -384,7 +388,7 @@ public class ContragentsImport extends Task
         }
     }
 
-    private void updateParamPhones(int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
+    private void updatePhonesParam(int paramId, Customer customer) throws XPathExpressionException, BGException, SQLException {
         ParameterPhoneValue phones = new ParameterPhoneValue();
 
         NodeList nodes = XMLUtils.selectNodeList(this.customerNode, "contact/phones/phone/text()");
@@ -416,7 +420,7 @@ public class ContragentsImport extends Task
 //        this.bgbcontracts.updateContractListParam(bgbContract.getId(), CONTRAGENT_ID_BGB_PARAMETER_ID, val);
 //    }
 
-    private void updateTechContact(Customer customer) throws XPathExpressionException, BGException, SQLException {
+    private void updateTechContactParameters(Customer customer) throws XPathExpressionException, BGException, SQLException {
         final int TECH_CONTACT_PERSON_PARAM_ID = 7;
         final int TECH_CONTACT_EMAIL_PARAM_ID = 11;
         final int TECH_CONTACT_PHONE_PARAM_ID = 159;
@@ -427,7 +431,7 @@ public class ContragentsImport extends Task
         updatePhoneForContactPerson(node, TECH_CONTACT_PHONE_PARAM_ID, customer);
     }
     
-    private void updateFinContact(Customer customer) throws XPathExpressionException, BGException, SQLException {
+    private void updateFinContactParameters(Customer customer) throws XPathExpressionException, BGException, SQLException {
         final int FIN_CONTACT_PERSON_PARAM_ID = 161;
         final int FIN_CONTACT_EMAIL_PARAM_ID = 157;
         final int FIN_CONTACT_PHONE_PARAM_ID = 160;
@@ -456,7 +460,7 @@ public class ContragentsImport extends Task
         
     }
 
-    private void updateParamContactPersons(Customer customer)
+    private void updateContactPersonsParam(Customer customer)
             throws XPathExpressionException, BGException, SQLException {
         /*
          * Имя: <name>, должность: <office>, роль: <role>, email: <email>,
@@ -528,17 +532,17 @@ public class ContragentsImport extends Task
      * 
      * @param xPath   - xPath-выражение для выборки значений с заданным атрибутом
      * @param paramId - какой параметр сохранять
-     * @param val2id  - трансляция строкового значения атрибута в Id
+     * @param valToIdMap  - трансляция строкового значения атрибута в Id
      * @throws XPathExpressionException
      * @throws BGException
      * @throws SQLException 
      */
-    private boolean updateParamList(String xPath, int paramId, Map<String, Integer> val2id, Customer customer)
+    private boolean updateParamList(String xPath, int paramId, Map<String, Integer> valToIdMap, Customer customer)
             throws XPathExpressionException, BGException, SQLException {
         boolean res = false;
-        String strVal = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, xPath), "");
-        int val = val2id.getOrDefault(strVal, -1);
-        logger.info("CustomerId: %d xPath: %s Value: %s Val.Id: %d", customer.getId(), xPath, strVal, val);
+        String strVal = XMLUtils.selectText(this.customerNode, xPath, "");
+        int val = valToIdMap.getOrDefault(strVal, -1);
+        logger.debug("CustomerId: %d xPath: %s Value: %s Val.Id: %d", customer.getId(), xPath, strVal, val);
 
         if (strVal != "" && val > 0) {
             this.pvDao.updateParamList(customer.getId(), paramId, new HashSet<Integer>(Arrays.asList(val)));
