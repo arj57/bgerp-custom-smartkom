@@ -18,7 +18,6 @@ import org.bgerp.app.cfg.Setup;
 import org.bgerp.app.exception.BGException;
 import org.bgerp.util.Log;
 import org.bgerp.app.exec.scheduler.Task;
-import org.bgerp.app.l10n.Localizer;
 import org.bgerp.plugin.kernel.Plugin;
 
 import ru.bgcrm.struts.action.ProcessAction;

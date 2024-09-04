@@ -52,12 +52,8 @@ http://127.0.0.1:8080/bgbilling/executer/json/ru.bitel.bgbilling.kernel.contract
 
 public class CustomContractDAO extends ContractDAO {
 
-    protected CustomContractDAO(User user, String billingId) {
+    public CustomContractDAO(User user, String billingId) {
         super(user, billingId);
-    }
-
-    public static CustomContractDAO getInstance(User user, String billingId) {
-        return new CustomContractDAO(user, billingId);
     }
 
 /*

@@ -4,7 +4,7 @@ import org.apache.struts.action.ActionForward;
 import org.bgerp.plugin.custom.demo.Plugin;
 
 import ru.bgcrm.servlet.ActionServlet.Action;
-import org.bgerp.action.BaseAction;
+import org.bgerp.action.base.BaseAction;
 import ru.bgcrm.struts.form.DynActionForm;
 import ru.bgcrm.util.sql.ConnectionSet;
 

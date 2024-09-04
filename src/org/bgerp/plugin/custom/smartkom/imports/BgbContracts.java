@@ -30,7 +30,7 @@ class BgbContracts {
 
         this.user = new User(login, password);
         contractParameterDao = new ContractParamDAO(this.user, billingId);
-        conDao = CustomContractDAO.getInstance(this.user, billingId);
+        conDao = new CustomContractDAO(this.user, billingId);
         contractHierarchyDAO = new ContractHierarchyDAO(this.user, billingId);
     }
     
