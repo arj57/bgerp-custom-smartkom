@@ -450,6 +450,7 @@ public class ContragentsImport extends Task
         ParameterPhoneValue phones = new ParameterPhoneValue();
 
         String strPhone = Utils.maskEmpty( XMLUtils.selectText(personNode, "./phones/phone[1]/text()"), "");
+        logger.info("phone val: '{}'", strPhone);
         if(!strPhone.isEmpty()) {
             strPhone = normalizePhoneNumber(strPhone);
             ParameterPhoneValueItem item = new ParameterPhoneValueItem(strPhone, "");
@@ -461,7 +462,7 @@ public class ContragentsImport extends Task
     private void updateEmailForContactPerson(Node personNode, int paramId, Customer customer) throws SQLException {
         
         String val = XMLUtils.selectText(personNode, "emails/email[1]/text()", "");
-        logger.info("email xPath:  '{}' val: '{}', nodeName: '{}'", "./emails/email[1]/text()", val, personNode.getNodeName());
+        logger.info("email val: '{}'", val);
         if (!val.isEmpty()) {
             pvDao.updateParamEmail(customer.getId(), paramId, 0, new ParameterEmailValue(val));
         }
