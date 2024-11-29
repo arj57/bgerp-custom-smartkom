@@ -201,13 +201,14 @@ public class ContragentsImport extends Task
     
                 Node root = document.getDocumentElement();
                 NodeList nList = XMLUtils.selectNodeList(root, "contragent");
+                Map<String, List<Integer>> customersMap =  getId1cToCustomersIdsMap(document);
     
                 for (int i = 0; i < nList.getLength(); i++) {
                     this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
                     String idFrom1C = XMLUtils.selectText(this.customerNode, "./@id", "");
                     logger.info("idFrom1C: '%s'", idFrom1C);
     
-                    List<Integer> custIds = searchCustomersIdsByIdFrom1C(idFrom1C);
+                    List<Integer> custIds = customersMap.get(idFrom1C);
                     if (custIds.size() == 0) { // Новый контрагент
                         logger.info("New idFrom1C: " + idFrom1C);
                         Customer customer = new Customer();
@@ -283,23 +284,30 @@ public class ContragentsImport extends Task
         
     }
 
-    private List<Integer> searchCustomersIdsByIdFrom1C(String idFrom1C) throws SQLException {
+    private Map<String, List<Integer>> getId1cToCustomersIdsMap(Document document) throws SQLException {
         final int ID_FROM_1C_PARAM_ID = 162;
+        final String qSel = "SELECT id FROM param_text WHERE param_id = " + ID_FROM_1C_PARAM_ID
+                                + " AND value = ?";
 
-        final String qSel = "SELECT id FROM param_text WHERE param_id = ? AND value = ?";
-
-        List<Integer> res = new ArrayList<>();
+        Node root = document.getDocumentElement();
+        
+        Map<String, List<Integer>> resMap = new HashMap<>();
         try (PreparedStatement ps = this.con.prepareStatement(qSel)) {
-            ps.setInt(1, ID_FROM_1C_PARAM_ID);
-            ps.setString(2, idFrom1C);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                res.add(rs.getInt("id"));
+            for ( Element e : XMLUtils.selectElements(root, "contragent")) {
+                int c = 1;
+                String idFrom1C = e.getAttribute("id");
+                ps.setString(c++, idFrom1C);
+                ResultSet rs = ps.executeQuery();
+                List<Integer> resIds = new ArrayList<>();
+                while(rs.next()) {
+                    resIds.add(rs.getInt(1));
+                }
+                resMap.put(idFrom1C, resIds);
             }
         }
-        return res;
+        return resMap;
     }
-
+    
     private void addBgbContractsLinks(Customer customer) throws XPathExpressionException, BGException, SQLException {
         
 //      Удаляем устаревшие линки на договоры  для текущего контрагента
