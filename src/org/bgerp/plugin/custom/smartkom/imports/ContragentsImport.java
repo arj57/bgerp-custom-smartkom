@@ -189,6 +189,9 @@ public class ContragentsImport extends Task
     private void doImport(String fileName) throws BGException {
 
         Document document = null;
+        final int ID_FROM_1C_PARAM_ID = 162;
+        final String qSel = "SELECT id FROM param_text WHERE param_id = " + ID_FROM_1C_PARAM_ID + " AND value = ?";
+        
         try {
             this.con = Setup.getSetup().getDBConnectionFromPool();
 
@@ -201,37 +204,37 @@ public class ContragentsImport extends Task
     
                 Node root = document.getDocumentElement();
                 NodeList nList = XMLUtils.selectNodeList(root, "contragent");
-                Map<String, List<Integer>> customersMap =  getId1cToCustomersIdsMap(document);
     
-                for (int i = 0; i < nList.getLength(); i++) {
-                    this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
-                    String idFrom1C = XMLUtils.selectText(this.customerNode, "./@id", "");
-                    logger.info("idFrom1C: '%s'", idFrom1C);
-    
-                    List<Integer> custIds = customersMap.get(idFrom1C);
-                    if (custIds.size() == 0) { // Новый контрагент
-                        logger.info("New idFrom1C: " + idFrom1C);
-                        Customer customer = new Customer();
-                        updateCustomerParameters(customer);
-                    }
-    
-                    else if (custIds.size() == 1) { // обновляем для существующего
-                        logger.info("Existent 1C id: '%s'", idFrom1C);
-                        Customer customer = this.custDao.getCustomerById(custIds.get(0));
-                        logger.info("Customer id: " + customer.getId());
-                        deleteCustomerParameters(customer);
-                        updateCustomerParameters(customer);
-                    }
-    
-                    else {
-                        String fullName = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
-                        logger.warn("Не уникальный 1С-ID: %s для контрагента %s. Такие же 1С-ID есть у контрагентов с Id %s. Пропускаем.",
-                                idFrom1C, fullName, custIds.toString());
-                        continue;
+                try (PreparedStatement ps = this.con.prepareStatement(qSel)) {
+                    for (int i = 0; i < nList.getLength(); i++) {
+                        this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
+                        String idFrom1C = ((Element) this.customerNode).getAttribute("id");
+                        logger.info("idFrom1C: '%s'", idFrom1C);
+                        
+                        List<Integer> custIds =  getCustomersIds(ps, idFrom1C);
+                        if (custIds.size() == 0) { // Новый контрагент
+                            logger.info("New idFrom1C: " + idFrom1C);
+                            Customer customer = new Customer();
+                            updateCustomerParameters(customer);
+                        }
+        
+                        else if (custIds.size() == 1) { // обновляем для существующего
+                            logger.info("Existent 1C id: '%s'", idFrom1C);
+                            Customer customer = this.custDao.getCustomerById(custIds.get(0));
+                            logger.info("Customer id: " + customer.getId());
+                            deleteCustomerParameters(customer);
+                            updateCustomerParameters(customer);
+                        }
+        
+                        else {
+                            String fullName = Utils.maskEmpty( XMLUtils.selectText(this.customerNode, "./@fullName"), "");
+                            logger.warn("Не уникальный 1С-ID: %s для контрагента %s. Такие же 1С-ID есть у контрагентов с Id %s. Пропускаем.",
+                                    idFrom1C, fullName, custIds.toString());
+                            continue;
+                        }
                     }
                 }
             } else {
-//                logger.error("Cannot parse XML document");
                 throw new BGException("Cannot parse XML document from '" + fileName + "'");
             }
         } catch (BGException | XPathExpressionException | SQLException | FileNotFoundException e) {
@@ -284,28 +287,14 @@ public class ContragentsImport extends Task
         
     }
 
-    private Map<String, List<Integer>> getId1cToCustomersIdsMap(Document document) throws SQLException {
-        final int ID_FROM_1C_PARAM_ID = 162;
-        final String qSel = "SELECT id FROM param_text WHERE param_id = " + ID_FROM_1C_PARAM_ID
-                                + " AND value = ?";
-
-        Node root = document.getDocumentElement();
-        
-        Map<String, List<Integer>> resMap = new HashMap<>();
-        try (PreparedStatement ps = this.con.prepareStatement(qSel)) {
-            for ( Element e : XMLUtils.selectElements(root, "contragent")) {
-                int c = 1;
-                String idFrom1C = e.getAttribute("id");
-                ps.setString(c++, idFrom1C);
-                ResultSet rs = ps.executeQuery();
-                List<Integer> resIds = new ArrayList<>();
-                while(rs.next()) {
-                    resIds.add(rs.getInt(1));
-                }
-                resMap.put(idFrom1C, resIds);
-            }
+    private List<Integer> getCustomersIds(PreparedStatement ps, String idFrom1C) throws SQLException{
+        List<Integer> resIds = new ArrayList<>();
+        ps.setString(1, idFrom1C);
+        ResultSet rs = ps.executeQuery();
+        while(rs.next()) {
+            resIds.add(rs.getInt(1));
         }
-        return resMap;
+        return resIds;
     }
     
     private void addBgbContractsLinks(Customer customer) throws XPathExpressionException, BGException, SQLException {
