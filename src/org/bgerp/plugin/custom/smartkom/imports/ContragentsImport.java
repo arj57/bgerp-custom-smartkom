@@ -208,9 +208,9 @@ public class ContragentsImport extends Task
                 try (PreparedStatement ps = this.con.prepareStatement(qSel)) {
                     for (int i = 0; i < nList.getLength(); i++) {
                         this.customerNode = nList.item(i).cloneNode(true); // for accelerating: https://habr.com/ru/articles/128175/
-                        String idFrom1C = ((Element) this.customerNode).getAttribute("id");
+                        String idFrom1C = XMLUtils.selectText(this.customerNode, "./@id", "");
                         logger.info("idFrom1C: '%s'", idFrom1C);
-                        
+        
                         List<Integer> custIds =  getCustomersIds(ps, idFrom1C);
                         if (custIds.size() == 0) { // Новый контрагент
                             logger.info("New idFrom1C: " + idFrom1C);
