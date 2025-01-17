@@ -7,7 +7,6 @@ import ru.bgcrm.model.customer.Customer;
 import ru.bgcrm.model.param.*;
 import ru.bgcrm.util.Utils;
 import ru.bgcrm.util.sql.SQLUtils;
-import ru.bgcrm.util.XMLUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,6 +37,7 @@ import org.bgerp.dao.param.ParamValueDAO;
 import org.bgerp.model.base.IdTitle;
 import org.bgerp.plugin.kernel.Plugin;
 import org.bgerp.util.Log;
+import org.bgerp.util.xml.XMLUtils;
 import org.bgerp.app.exec.scheduler.Task;
 import org.w3c.dom.*;
 
